@@ -14,16 +14,15 @@ namespace mmlspark.stages
     /// <summary>
     /// <see cref="SelectColumns"/> implements SelectColumns
     /// </summary>
-    public class SelectColumns : Identifiable, IJvmObjectReferenceProvider
+    public class SelectColumns : FeatureBase<SelectColumns>
     {
         private static readonly string s_selectColumnsClassName = "com.microsoft.ml.spark.stages.SelectColumns";
 
         /// <summary>
         /// Creates a <see cref="SelectColumns"/> without any parameters.
         /// </summary>
-        public SelectColumns() : this(SparkEnvironment.JvmBridge.CallConstructor(s_selectColumnsClassName))
+        public SelectColumns() : base(s_selectColumnsClassName)
         {
-            // Reference = SparkEnvironment.JvmBridge.CallConstructor(s_selectColumnsClassName, null);
         }
 
         /// <summary>
@@ -31,19 +30,13 @@ namespace mmlspark.stages
         /// <see cref="SelectColumns"/> a unique ID.
         /// </summary>
         /// <param name="uid">An immutable unique ID for the object and its derivatives.</param>
-        public SelectColumns(string uid): this(SparkEnvironment.JvmBridge.CallConstructor(s_selectColumnsClassName, uid))
+        public SelectColumns(string uid): base(s_selectColumnsClassName, uid)
         {
-            // Reference = SparkEnvironment.JvmBridge.CallConstructor(s_selectColumnsClassName, uid);
         }
 
-        internal SelectColumns(JvmObjectReference jvmObject)
+        internal SelectColumns(JvmObjectReference jvmObject) : base(jvmObject)
         {
-            Reference = jvmObject;
         }
-
-        public JvmObjectReference Reference { get; private set; }
-
-        public string Uid() => (string)Reference.Invoke("uid");
 
         /// <summary>
         /// Sets cols value for <see cref="cols"/>
