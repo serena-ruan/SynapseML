@@ -2,9 +2,13 @@
 
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
-
     <IsPackable>false</IsPackable>
   </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Cognitive\Cognitive.csproj" />
+    <ProjectReference Include="..\SparkFixture\SparkFixture.csproj" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.7.1" />
@@ -18,12 +22,6 @@
     </PackageReference>
     <PackageReference Include="Microsoft.Spark" Version="2.0.0" />
     <PackageReference Include="IgnoresAccessChecksToGenerator" Version="0.4.0" PrivateAssets="All" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\SelectColumns\SelectColumns.csproj" />
-    <ProjectReference Include="..\SparkFixture\SparkFixture.csproj" />
-    <ProjectReference Include="..\Wrapper\Wrapper.csproj" />
   </ItemGroup>
 
   <PropertyGroup>

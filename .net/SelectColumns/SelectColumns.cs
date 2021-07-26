@@ -7,6 +7,7 @@ using Microsoft.Spark.Interop.Ipc;
 using Microsoft.Spark.ML.Feature;
 using Microsoft.Spark.Sql;
 using Microsoft.Spark.Sql.Types;
+using mmlspark.dotnet.utils;
 
 namespace mmlspark.stages
 {
@@ -14,7 +15,7 @@ namespace mmlspark.stages
     /// <summary>
     /// <see cref="SelectColumns"/> implements SelectColumns
     /// </summary>
-    public class SelectColumns : FeatureBase<SelectColumns>
+    public class SelectColumns : Transformer<SelectColumns>
     {
         private static readonly string s_selectColumnsClassName = "com.microsoft.ml.spark.stages.SelectColumns";
 
@@ -57,30 +58,7 @@ namespace mmlspark.stages
         /// </summary>
         /// <returns>List of cols </returns>
         public IEnumerable<string> GetCols() => (string[])Reference.Invoke("getCols");
-
-        /// <summary>
-        /// Executes the <see cref="SelectColumns"/> and transforms the DataFrame to include the new column.
-        /// </summary>
-        /// <param name="dataset">The DataFrame to transform</param>
-        /// <returns>
-        /// New <see cref="DataFrame"/> object with the source <see cref="DataFrame"/> transformed.
-        /// </returns>
-        public DataFrame Transform(DataFrame dataset) =>
-            new DataFrame((JvmObjectReference)Reference.Invoke("transform", dataset));
-
-        /// <summary>
-        /// Executes the <see cref="SelectColumns"/> and transforms the schema.
-        /// </summary>
-        /// <param name="schema">The Schema to be transformed</param>
-        /// <returns>
-        /// New <see cref="StructType"/> object with the schema <see cref="StructType"/> transformed.
-        /// </returns>
-        public StructType TransformSchema(StructType schema) =>
-            new StructType(
-                (JvmObjectReference)Reference.Invoke(
-                    "transformSchema",
-                    DataType.FromJson(Reference.Jvm, schema.Json)));
-
+        
         /// <summary>
         /// Loads the <see cref="SelectColumns"/> that was previously saved using Save.
         /// </summary>

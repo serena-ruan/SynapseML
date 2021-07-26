@@ -17,7 +17,7 @@ using Microsoft.Spark.ML.Feature;
 using Microsoft.Spark.ML.Feature.Param;
 using Xunit;
 
-namespace mmlspark.stages.test
+namespace mmlspark.test.utils
 {
     /// <summary>
     /// Creates a temporary folder that is automatically cleaned up when disposed.
@@ -274,6 +274,16 @@ namespace mmlspark.stages.test
             {
                 return "--repositories  https://mmlspark.blob.core.windows.net/maven/";
             } 
+            return "";
+        }
+
+        public string AddLocalMMLSparkJar()
+        {
+            bool addLocalMMLSparkJar = true;
+            if (addLocalMMLSparkJar)
+            {
+                return "--jars D:\\repos\\mmlspark\\target\\scala-2.12\\mmlspark-1.0.0-rc3-148-87ec5f74-SNAPSHOT.jar";
+            }
             return "";
         }
 

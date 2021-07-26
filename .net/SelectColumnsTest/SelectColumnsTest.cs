@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using Microsoft.Spark.Sql;
 using Microsoft.Spark.Sql.Types;
 using Xunit;
+using mmlspark.test.utils;
 
 namespace mmlspark.stages.test
 {
