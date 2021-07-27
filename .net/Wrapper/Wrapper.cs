@@ -2,6 +2,7 @@
 using System;
 using System.Linq;
 using System.Reflection;
+using Microsoft.Spark;
 using Microsoft.Spark.Sql;
 using Microsoft.Spark.Sql.Types;
 using Microsoft.Spark.ML.Feature;
@@ -15,28 +16,80 @@ namespace mmlspark.dotnet.utils
     /// <summary>
     /// <see cref="Transformer"/> Abstract class for transformers that transform one dataset into another.
     /// </summary>
-    public class Transformer<T> : FeatureBase<T>
+    public abstract class ScalaTransformer<T> : FeatureBase<T>
     {
-        public Transformer(string className) : base(className)
+        public ScalaTransformer(string className) : base(className)
         {
         }
 
-        public Transformer(string className, string uid) : base(className, uid)
+        public ScalaTransformer(string className, string uid) : base(className, uid)
         {
         }
 
-        public Transformer(JvmObjectReference jvmObject) : base(jvmObject)
+        public ScalaTransformer(JvmObjectReference jvmObject) : base(jvmObject)
         {
         }
 
-        public DataFrame Transform(DataFrame dataset) =>
-            new DataFrame((JvmObjectReference)Reference.Invoke("transform", dataset));
+        public abstract DataFrame Transform(DataFrame dataset);
 
-        public StructType TransformSchema(StructType schema) =>
-            new StructType(
-                (JvmObjectReference)Reference.Invoke(
-                    "transformSchema",
-                    DataType.FromJson(Reference.Jvm, schema.Json)));
+    }
+
+    /// <summary>
+    /// <see cref="Estimator"/> Abstract class for estimators that fit models to data.
+    /// </summary>
+    public abstract class ScalaEstimator<E, T> : FeatureBase<E> where T : ScalaTransformer<T>
+    {
+
+        public ScalaEstimator(string className) : base(className)
+        {
+        }
+
+        public ScalaEstimator(string className, string uid) : base(className, uid)
+        {
+        }
+
+        public ScalaEstimator(JvmObjectReference jvmObject) : base(jvmObject)
+        {
+        }
+
+        public abstract T Fit(DataFrame dataset);
+
+    }
+
+    public abstract class ScalaModel<T> : ScalaTransformer<T> where T : ScalaModel<T>
+    {
+        public ScalaModel(string className) : base(className)
+        {
+        }
+
+        public ScalaModel(string className, string uid) : base(className, uid)
+        {
+        }
+
+        public ScalaModel(JvmObjectReference jvmObject) : base(jvmObject)
+        {
+        }
+
+    }
+
+    public abstract class ScalaEvaluator<T> : FeatureBase<T>
+    {
+
+        public ScalaEvaluator(string className) : base(className)
+        {
+        }
+
+        public ScalaEvaluator(string className, string uid) : base(className, uid)
+        {
+        }
+
+        public ScalaEvaluator(JvmObjectReference jvmObject) : base(jvmObject)
+        {
+        }
+
+        public abstract Double Evaluate(DataFrame dataset);
+
+        public Boolean IsLargerBetter() => true;
 
     }
 

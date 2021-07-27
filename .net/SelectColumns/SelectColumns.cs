@@ -15,7 +15,7 @@ namespace mmlspark.stages
     /// <summary>
     /// <see cref="SelectColumns"/> implements SelectColumns
     /// </summary>
-    public class SelectColumns : Transformer<SelectColumns>
+    public class SelectColumns : ScalaTransformer<SelectColumns>
     {
         private static readonly string s_selectColumnsClassName = "com.microsoft.ml.spark.stages.SelectColumns";
 
@@ -59,6 +59,9 @@ namespace mmlspark.stages
         /// <returns>List of cols </returns>
         public IEnumerable<string> GetCols() => (string[])Reference.Invoke("getCols");
         
+        override public DataFrame Transform(DataFrame dataset) =>
+            new DataFrame((JvmObjectReference)Reference.Invoke("transform", dataset));
+
         /// <summary>
         /// Loads the <see cref="SelectColumns"/> that was previously saved using Save.
         /// </summary>

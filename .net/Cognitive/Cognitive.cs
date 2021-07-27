@@ -3,29 +3,28 @@ using Microsoft.Spark.Interop;
 using Microsoft.Spark.Interop.Ipc;
 using mmlspark.dotnet.utils;
 using System.Collections.Generic;
+using Microsoft.Spark.Sql;
 using Microsoft.Spark.ML.Feature.Param;
 
 namespace mmlspark.cognitive
 {
-    public class TextSentiment: Transformer<TextSentiment>
+    public class TextSentiment : ScalaTransformer<TextSentiment>
     {
         private static readonly string s_textSentimentClassName = "com.microsoft.ml.spark.cognitive.TextSentiment";
 
-        
+
         public TextSentiment() : base(s_textSentimentClassName)
         {
-            this.SetTextCol("text");
-            this.SetLanguage(new List<string> {"en"});
         }
 
-         public TextSentiment(string uid): base(s_textSentimentClassName, uid)
+        public TextSentiment(string uid) : base(s_textSentimentClassName, uid)
         {
         }
         internal TextSentiment(JvmObjectReference jvmObject) : base(jvmObject)
         {
         }
 
-        public TextSentiment SetShowStats(bool value) => 
+        public TextSentiment SetShowStats(bool value) =>
             WrapAsTextSentiment(Reference.Invoke("setShowStats", value));
 
         public TextSentiment SetModelVersion(string value) =>
@@ -33,7 +32,7 @@ namespace mmlspark.cognitive
 
         public TextSentiment SetLanguage(IEnumerable<string> value) =>
             WrapAsTextSentiment(Reference.Invoke("setLanguage", value));
-        
+
         public TextSentiment SetLanguage(string value) =>
             WrapAsTextSentiment(Reference.Invoke("setLanguage", value));
 
@@ -45,7 +44,7 @@ namespace mmlspark.cognitive
 
         public TextSentiment SetSubscriptionKey(string value) =>
             WrapAsTextSentiment(Reference.Invoke("setSubscriptionKey", value));
-        
+
         public TextSentiment SetOutputCol(string value) =>
             WrapAsTextSentiment(Reference.Invoke("setOutputCol", value));
 
@@ -54,12 +53,15 @@ namespace mmlspark.cognitive
 
         public IEnumerable<string> GetLanguage() => (string[])Reference.Invoke("getLanguage");
 
-         public static TextSentiment Load(string path) =>
-            WrapAsTextSentiment(
-                SparkEnvironment.JvmBridge.CallStaticJavaMethod(
-                    s_textSentimentClassName,
-                    "load",
-                    path));
+        override public DataFrame Transform(DataFrame dataset) =>
+            new DataFrame((JvmObjectReference)Reference.Invoke("transform", dataset));
+
+        public static TextSentiment Load(string path) =>
+           WrapAsTextSentiment(
+               SparkEnvironment.JvmBridge.CallStaticJavaMethod(
+                   s_textSentimentClassName,
+                   "load",
+                   path));
 
         private static TextSentiment WrapAsTextSentiment(object obj) => new TextSentiment((JvmObjectReference)obj);
 
