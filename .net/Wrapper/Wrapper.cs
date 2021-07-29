@@ -14,7 +14,7 @@ namespace mmlspark.dotnet.utils
 {
 
     /// <summary>
-    /// <see cref="Transformer"/> Abstract class for transformers that transform one dataset into another.
+    /// <see cref="ScalaTransformer"/> Abstract class for transformers that transform one dataset into another.
     /// </summary>
     public abstract class ScalaTransformer<T> : FeatureBase<T>
     {
@@ -30,14 +30,19 @@ namespace mmlspark.dotnet.utils
         {
         }
 
+        /// <summary>
+        /// Transforms the dataset with optional parameters
+        /// </summary>
+        /// <param name=\"dataset\">input dataset</param>
+        /// <returns>
+        /// <see cref=\"DataFrame\"/>transformed dataset.
+        /// </returns>
         public abstract DataFrame Transform(DataFrame dataset);
-
-        public abstract StructType TransformSchema(StructType schema);
 
     }
 
     /// <summary>
-    /// <see cref="Estimator"/> Abstract class for estimators that fit models to data.
+    /// <see cref="ScalaEstimator"/> Abstract class for estimators that fit models to data.
     /// </summary>
     public abstract class ScalaEstimator<E, T> : FeatureBase<E> where T : ScalaTransformer<T>
     {
@@ -58,6 +63,9 @@ namespace mmlspark.dotnet.utils
 
     }
 
+    /// <summary>
+    /// <see cref="ScalaModel"/> Abstract class for models that are fitted by estimators.
+    /// </summary>
     public abstract class ScalaModel<T> : ScalaTransformer<T> where T : ScalaModel<T>
     {
         public ScalaModel(string className) : base(className)
@@ -74,6 +82,9 @@ namespace mmlspark.dotnet.utils
 
     }
 
+    /// <summary>
+    /// <see cref="ScalaEvaluator"/> Abstract class for evaluators that compute metrics from predictions.
+    /// </summary>
     public abstract class ScalaEvaluator<T> : FeatureBase<T>
     {
 
@@ -91,7 +102,7 @@ namespace mmlspark.dotnet.utils
 
         public abstract Double Evaluate(DataFrame dataset);
 
-        public Boolean IsLargerBetter() => true;
+        public Boolean IsLargerBetter => true;
 
     }
 
