@@ -4,6 +4,7 @@ using Microsoft.Spark.Interop.Ipc;
 using mmlspark.dotnet.utils;
 using System.Collections.Generic;
 using Microsoft.Spark.Sql;
+using Microsoft.Spark.Sql.Types;
 using Microsoft.Spark.ML.Feature.Param;
 
 namespace mmlspark.cognitive
@@ -55,6 +56,12 @@ namespace mmlspark.cognitive
 
         override public DataFrame Transform(DataFrame dataset) =>
             new DataFrame((JvmObjectReference)Reference.Invoke("transform", dataset));
+        
+        override public StructType TransformSchema(StructType schema) =>
+            new StructType(
+                (JvmObjectReference)Reference.Invoke(
+                    "transformSchema",
+                    DataType.FromJson(Reference.Jvm, schema.Json)));
 
         public static TextSentiment Load(string path) =>
            WrapAsTextSentiment(

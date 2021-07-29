@@ -32,6 +32,8 @@ namespace mmlspark.dotnet.utils
 
         public abstract DataFrame Transform(DataFrame dataset);
 
+        public abstract StructType TransformSchema(StructType schema);
+
     }
 
     /// <summary>

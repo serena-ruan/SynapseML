@@ -4,6 +4,7 @@ using Microsoft.Spark.Interop.Ipc;
 using Microsoft.Spark.ML.Feature;
 using mmlspark.dotnet.utils;
 using Microsoft.Spark.Sql;
+using Microsoft.Spark.Sql.Types;
 
 namespace mmlspark.core.featurize.text
 {
@@ -26,6 +27,12 @@ namespace mmlspark.core.featurize.text
 
         override public DataFrame Transform(DataFrame dataset) =>
             new DataFrame((JvmObjectReference)Reference.Invoke("transform", dataset));
+        
+        override public StructType TransformSchema(StructType schema) =>
+            new StructType(
+                (JvmObjectReference)Reference.Invoke(
+                    "transformSchema",
+                    DataType.FromJson(Reference.Jvm, schema.Json)));
 
     }
 
