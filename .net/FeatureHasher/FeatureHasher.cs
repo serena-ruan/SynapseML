@@ -143,7 +143,7 @@ namespace org.apache.spark.ml.feature
         /// The <see cref="StructType"/> of the output schema that would have been derived from the
         /// input schema, if Transform had been called.
         /// </returns>
-        override public StructType TransformSchema(StructType schema) =>
+        public StructType TransformSchema(StructType schema) =>
             new StructType(
                 (JvmObjectReference)Reference.Invoke(
                     "transformSchema",

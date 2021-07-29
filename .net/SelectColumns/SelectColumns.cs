@@ -62,7 +62,7 @@ namespace mmlspark.stages
         override public DataFrame Transform(DataFrame dataset) =>
             new DataFrame((JvmObjectReference)Reference.Invoke("transform", dataset));
         
-        override public StructType TransformSchema(StructType schema) =>
+        public StructType TransformSchema(StructType schema) =>
             new StructType(
                 (JvmObjectReference)Reference.Invoke(
                     "transformSchema",
