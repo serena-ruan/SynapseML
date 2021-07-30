@@ -22,7 +22,7 @@ namespace mmlspark.test.utils
     /// <summary>
     /// Creates a temporary folder that is automatically cleaned up when disposed.
     /// </summary>
-    internal sealed class TemporaryDirectory : IDisposable
+    public class TemporaryDirectory : IDisposable
     {
         private bool _disposed = false;
 
