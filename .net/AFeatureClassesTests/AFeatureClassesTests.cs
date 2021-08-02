@@ -7,6 +7,7 @@ using Microsoft.Spark.Sql;
 using Microsoft.Spark.Sql.Types;
 using Xunit;
 using mmlspark.test.utils;
+using Microsoft.Spark.Interop.Ipc;
 using featurebase;
 using org.apache.spark.ml.feature;
 
@@ -26,9 +27,11 @@ namespace org.apache.spark.ml.feature.test
     public class FeaturesTests : IClassFixture<FeaturesFixture>
     {
         private readonly SparkSession _spark;
+        private readonly IJvmBridge _jvm;
         public FeaturesTests(FeaturesFixture fixture)
         {
             _spark = fixture.sparkFixture.Spark;
+            _jvm = fixture.sparkFixture.Jvm;
         }
 
         [Fact]

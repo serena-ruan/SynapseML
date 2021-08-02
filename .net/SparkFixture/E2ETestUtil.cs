@@ -161,7 +161,7 @@ namespace mmlspark.test.utils
 
         public SparkSession Spark { get; }
 
-        internal IJvmBridge Jvm { get; }
+        public IJvmBridge Jvm { get; }
 
         public SparkFixture()
         {
