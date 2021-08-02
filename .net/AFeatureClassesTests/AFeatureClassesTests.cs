@@ -17,10 +17,10 @@ namespace org.apache.spark.ml.feature.test
     {
         public FeaturesFixture()
         {
-            SparkFixture = new SparkFixture();
+            sparkFixture = new SparkFixture();
         }
 
-        public SparkFixture SparkFixture { get; private set; }
+        public SparkFixture sparkFixture { get; private set; }
     }
 
     public class FeaturesTests : IClassFixture<FeaturesFixture>
@@ -28,7 +28,7 @@ namespace org.apache.spark.ml.feature.test
         private readonly SparkSession _spark;
         public FeaturesTests(FeaturesFixture fixture)
         {
-            _spark = fixture.SparkFixture.Spark;
+            _spark = fixture.sparkFixture.Spark;
         }
 
         [Fact]
@@ -194,7 +194,7 @@ namespace org.apache.spark.ml.feature.test
             featurebase.FeatureHasher hasher = new featurebase.FeatureHasher()
                 .SetInputCols(new List<string>() { "real", "bool", "stringNum", "string" })
                 .SetOutputCol("features")
-                .SetCategoricalCols(new List<string>() { "real", "string" })
+                .SetCategoricalCols(new string[] { "real", "string" })
                 .SetNumFeatures(10);
 
             Assert.IsType<string>(hasher.GetOutputCol());
