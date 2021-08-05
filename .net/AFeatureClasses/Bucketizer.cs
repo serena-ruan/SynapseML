@@ -68,8 +68,8 @@ namespace featurebase
         /// input column names
         /// </param>
         /// <returns> New Bucketizer object </returns>
-        public Bucketizer SetInputCols(IEnumerable<string> value) =>
-            WrapAsBucketizer(Reference.Invoke("setInputCols", value));
+        public Bucketizer SetInputCols(string[] value) =>
+            WrapAsBucketizer(Reference.Invoke("setInputCols", (object)value));
         
         /// <summary>
         /// Sets outputCol value for <see cref="outputCol"/>
@@ -88,8 +88,8 @@ namespace featurebase
         /// output column names
         /// </param>
         /// <returns> New Bucketizer object </returns>
-        public Bucketizer SetOutputCols(IEnumerable<string> value) =>
-            WrapAsBucketizer(Reference.Invoke("setOutputCols", value));
+        public Bucketizer SetOutputCols(string[] value) =>
+            WrapAsBucketizer(Reference.Invoke("setOutputCols", (object)value));
         
         /// <summary>
         /// Sets splits value for <see cref="splits"/>
@@ -98,7 +98,7 @@ namespace featurebase
         /// Split points for mapping continuous features into buckets. With n+1 splits, there are n buckets. A bucket defined by splits x,y holds values in the range [x,y) except the last bucket, which also includes y. The splits should be of length >= 3 and strictly increasing. Values at -inf, inf must be explicitly provided to cover all Double values; otherwise, values outside the splits specified will be treated as errors.
         /// </param>
         /// <returns> New Bucketizer object </returns>
-        public Bucketizer SetSplits(IEnumerable<double> value) =>
+        public Bucketizer SetSplits(double[] value) =>
             WrapAsBucketizer(Reference.Invoke("setSplits", value));
         
         /// <summary>
@@ -108,8 +108,8 @@ namespace featurebase
         /// The array of split points for mapping continuous features into buckets for multiple columns. For each input column, with n+1 splits, there are n buckets. A bucket defined by splits x,y holds values in the range [x,y) except the last bucket, which also includes y. The splits should be of length >= 3 and strictly increasing. Values at -inf, inf must be explicitly provided to cover all Double values; otherwise, values outside the splits specified will be treated as errors.
         /// </param>
         /// <returns> New Bucketizer object </returns>
-        public Bucketizer SetSplitsArray(object value) =>
-            WrapAsBucketizer(Reference.Invoke("setSplitsArray", value));
+        public Bucketizer SetSplitsArray(double[][] value) =>
+            WrapAsBucketizer(Reference.Invoke("setSplitsArray", (object)value));
 
         /// <summary>
         /// Gets handleInvalid value for <see cref="handleInvalid"/>
@@ -135,8 +135,8 @@ namespace featurebase
         /// <returns>
         /// inputCols: input column names
         /// </returns>
-        public IEnumerable<string> GetInputCols() =>
-            (IEnumerable<string>)Reference.Invoke("getInputCols");
+        public string[] GetInputCols() =>
+            (string[])Reference.Invoke("getInputCols");
         
         /// <summary>
         /// Gets outputCol value for <see cref="outputCol"/>
@@ -153,8 +153,8 @@ namespace featurebase
         /// <returns>
         /// outputCols: output column names
         /// </returns>
-        public IEnumerable<string> GetOutputCols() =>
-            (IEnumerable<string>)Reference.Invoke("getOutputCols");
+        public string[] GetOutputCols() =>
+            (string[])Reference.Invoke("getOutputCols");
         
         /// <summary>
         /// Gets splits value for <see cref="splits"/>
@@ -162,8 +162,8 @@ namespace featurebase
         /// <returns>
         /// splits: Split points for mapping continuous features into buckets. With n+1 splits, there are n buckets. A bucket defined by splits x,y holds values in the range [x,y) except the last bucket, which also includes y. The splits should be of length >= 3 and strictly increasing. Values at -inf, inf must be explicitly provided to cover all Double values; otherwise, values outside the splits specified will be treated as errors.
         /// </returns>
-        public IEnumerable<double> GetSplits() =>
-            (IEnumerable<double>)Reference.Invoke("getSplits");
+        public double[] GetSplits() =>
+            (double[])Reference.Invoke("getSplits");
         
         /// <summary>
         /// Gets splitsArray value for <see cref="splitsArray"/>
@@ -171,8 +171,8 @@ namespace featurebase
         /// <returns>
         /// splitsArray: The array of split points for mapping continuous features into buckets for multiple columns. For each input column, with n+1 splits, there are n buckets. A bucket defined by splits x,y holds values in the range [x,y) except the last bucket, which also includes y. The splits should be of length >= 3 and strictly increasing. Values at -inf, inf must be explicitly provided to cover all Double values; otherwise, values outside the splits specified will be treated as errors.
         /// </returns>
-        public object GetSplitsArray() =>
-            (object)Reference.Invoke("getSplitsArray");
+        public double[][] GetSplitsArray() =>
+            (double[][])Reference.Invoke("getSplitsArray");
 
         /// <summary>
         /// Executes the <see cref="Bucketizer"/> and transforms the DataFrame to include new columns.

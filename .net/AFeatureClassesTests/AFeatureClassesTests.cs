@@ -100,8 +100,8 @@ namespace org.apache.spark.ml.feature.test
 
             string expectedHandle = "keep";
 
-            var expectedInputCols = new List<string>() { "input_col_a", "input_col_b" };
-            var expectedOutputCols = new List<string>() { "output_col_a", "output_col_b" };
+            var expectedInputCols = new string[] { "input_col_a", "input_col_b" };
+            var expectedOutputCols = new string[] { "output_col_a", "output_col_b" };
 
             var bucketizer = new featurebase.Bucketizer();
             bucketizer.SetInputCols(expectedInputCols)
