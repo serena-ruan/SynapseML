@@ -50,6 +50,8 @@ namespace org.apache.spark.ml.feature.test
                 .SetOutputCol(expectedOutputCol)
                 .SetHandleInvalid(expectedHandle)
                 .SetSplits(expectedSplits);
+            
+            bucketizer.Write().Overwrite().Save("D:\\repos\\mmlspark\\.net\\AFeatureClassesTests\\models\\bucketizer.model");
 
             Assert.Equal(expectedHandle, bucketizer.GetHandleInvalid());
 

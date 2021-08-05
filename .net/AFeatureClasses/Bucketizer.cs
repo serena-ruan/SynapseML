@@ -17,7 +17,7 @@ namespace featurebase
     /// <summary>
     /// <see cref="Bucketizer"/> implements Bucketizer
     /// </summary>
-    public class Bucketizer : ScalaModel<Bucketizer>
+    public class Bucketizer : ScalaModel<Bucketizer>, ScalaMLWritable, ScalaMLReadable<Bucketizer>
     {
         private static readonly string s_bucketizerClassName = "org.apache.spark.ml.feature.Bucketizer";
 
@@ -213,6 +213,13 @@ namespace featurebase
         /// <returns>New <see cref="Bucketizer"/> object, loaded from path.</returns>
         public static Bucketizer Load(string path) => WrapAsBucketizer(
             SparkEnvironment.JvmBridge.CallStaticJavaMethod(s_bucketizerClassName, "load", path));
+        
+        /// <returns>a <see cref=\"ScalaMLWriter\"/> instance for this ML instance.</returns>
+        public ScalaMLWriter Write() => 
+            new ScalaMLWriter((JvmObjectReference)Reference.Invoke("write"));
+
+        public ScalaMLReader<Bucketizer> Read() =>
+            new ScalaMLReader<Bucketizer>((JvmObjectReference)Reference.Invoke("read"));
 
         private static Bucketizer WrapAsBucketizer(object obj) =>
             new Bucketizer((JvmObjectReference)obj);
