@@ -197,7 +197,7 @@ namespace org.apache.spark.ml.feature.test
                 }));
 
             featurebase.FeatureHasher hasher = new featurebase.FeatureHasher()
-                .SetInputCols(new List<string>() { "real", "bool", "stringNum", "string" })
+                .SetInputCols(new string[] { "real", "bool", "stringNum", "string" })
                 .SetOutputCol("features")
                 .SetCategoricalCols(new string[] { "real", "string" })
                 .SetNumFeatures(10);

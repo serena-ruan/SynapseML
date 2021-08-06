@@ -6,9 +6,9 @@ using System;
 using System.Collections.Generic;
 using Microsoft.Spark.Interop;
 using Microsoft.Spark.Interop.Ipc;
-// using Microsoft.Spark.ML.Feature;
 using Microsoft.Spark.Sql;
 using Microsoft.Spark.Sql.Types;
+using mmlspark.dotnet.wrapper;
 using mmlspark.dotnet.utils;
 
 
@@ -17,7 +17,7 @@ namespace featurebase
     /// <summary>
     /// <see cref="CountVectorizerModel"/> implements CountVectorizerModel
     /// </summary>
-    public class CountVectorizerModel : ScalaModel<CountVectorizerModel>
+    public class CountVectorizerModel : ScalaModel<CountVectorizerModel>, ScalaMLWritable, ScalaMLReadable<CountVectorizerModel>
     {
         private static readonly string s_countVectorizerModelClassName = "org.apache.spark.ml.feature.CountVectorizerModel";
 
@@ -49,7 +49,7 @@ namespace featurebase
         /// </param>
         /// <returns> New CountVectorizerModel object </returns>
         public CountVectorizerModel SetBinary(bool value) =>
-            WrapAsCountVectorizerModel(Reference.Invoke("setBinary", value));
+            WrapAsCountVectorizerModel(Reference.Invoke("setBinary", (object)value));
         
         /// <summary>
         /// Sets inputCol value for <see cref="inputCol"/>
@@ -59,7 +59,7 @@ namespace featurebase
         /// </param>
         /// <returns> New CountVectorizerModel object </returns>
         public CountVectorizerModel SetInputCol(string value) =>
-            WrapAsCountVectorizerModel(Reference.Invoke("setInputCol", value));
+            WrapAsCountVectorizerModel(Reference.Invoke("setInputCol", (object)value));
         
         /// <summary>
         /// Sets maxDF value for <see cref="maxDF"/>
@@ -69,7 +69,7 @@ namespace featurebase
         /// </param>
         /// <returns> New CountVectorizerModel object </returns>
         public CountVectorizerModel SetMaxDF(double value) =>
-            WrapAsCountVectorizerModel(Reference.Invoke("setMaxDF", value));
+            WrapAsCountVectorizerModel(Reference.Invoke("setMaxDF", (object)value));
         
         /// <summary>
         /// Sets minDF value for <see cref="minDF"/>
@@ -79,7 +79,7 @@ namespace featurebase
         /// </param>
         /// <returns> New CountVectorizerModel object </returns>
         public CountVectorizerModel SetMinDF(double value) =>
-            WrapAsCountVectorizerModel(Reference.Invoke("setMinDF", value));
+            WrapAsCountVectorizerModel(Reference.Invoke("setMinDF", (object)value));
         
         /// <summary>
         /// Sets minTF value for <see cref="minTF"/>
@@ -89,7 +89,7 @@ namespace featurebase
         /// </param>
         /// <returns> New CountVectorizerModel object </returns>
         public CountVectorizerModel SetMinTF(double value) =>
-            WrapAsCountVectorizerModel(Reference.Invoke("setMinTF", value));
+            WrapAsCountVectorizerModel(Reference.Invoke("setMinTF", (object)value));
         
         /// <summary>
         /// Sets outputCol value for <see cref="outputCol"/>
@@ -99,7 +99,7 @@ namespace featurebase
         /// </param>
         /// <returns> New CountVectorizerModel object </returns>
         public CountVectorizerModel SetOutputCol(string value) =>
-            WrapAsCountVectorizerModel(Reference.Invoke("setOutputCol", value));
+            WrapAsCountVectorizerModel(Reference.Invoke("setOutputCol", (object)value));
         
         /// <summary>
         /// Sets vocabSize value for <see cref="vocabSize"/>
@@ -109,7 +109,7 @@ namespace featurebase
         /// </param>
         /// <returns> New CountVectorizerModel object </returns>
         public CountVectorizerModel SetVocabSize(int value) =>
-            WrapAsCountVectorizerModel(Reference.Invoke("setVocabSize", value));
+            WrapAsCountVectorizerModel(Reference.Invoke("setVocabSize", (object)value));
 
         /// <summary>
         /// Gets binary value for <see cref="binary"/>
@@ -175,44 +175,27 @@ namespace featurebase
             (int)Reference.Invoke("getVocabSize");
 
         /// <summary>
-        /// Executes the <see cref="CountVectorizerModel"/> and transforms the DataFrame to include new columns.
-        /// </summary>
-        /// <param name="dataset">The Dataframe to be transformed.</param>
-        /// <returns>
-        /// <see cref="DataFrame"/> containing the original data and new columns.
-        /// </returns>
-        override public DataFrame Transform(DataFrame dataset) =>
-            new DataFrame((JvmObjectReference)Reference.Invoke("transform", dataset));
-        
-        /// <summary>
-        /// Check transform validity and derive the output schema from the input schema.
-        ///
-        /// We check validity for interactions between parameters during transformSchema
-        /// and raise an exception if any parameter value is invalid.
-        ///
-        /// Typical implementation should first conduct verification on schema change and
-        /// parameter validity, including complex parameter interaction checks.
-        /// </summary>
-        /// <param name="schema">
-        /// The <see cref="StructType"/> of the <see cref="DataFrame"/> which will be transformed.
-        /// </param>
-        /// </returns>
-        /// The <see cref="StructType"/> of the output schema that would have been derived from the
-        /// input schema, if Transform had been called.
-        /// </returns>
-        public StructType TransformSchema(StructType schema) =>
-            new StructType(
-                (JvmObjectReference)Reference.Invoke(
-                    "transformSchema",
-                    DataType.FromJson(Reference.Jvm, schema.Json)));
-
-        /// <summary>
         /// Loads the <see cref="CountVectorizerModel"/> that was previously saved using Save(string).
         /// </summary>
         /// <param name="path">The path the previous <see cref="CountVectorizerModel"/> was saved to</param>
         /// <returns>New <see cref="CountVectorizerModel"/> object, loaded from path.</returns>
         public static CountVectorizerModel Load(string path) => WrapAsCountVectorizerModel(
             SparkEnvironment.JvmBridge.CallStaticJavaMethod(s_countVectorizerModelClassName, "load", path));
+        
+        /// <summary>
+        /// Saves the object so that it can be loaded later using Load. Note that these objects
+        /// can be shared with Scala by Loading or Saving in Scala.
+        /// </summary>
+        /// <param name="path">The path to save the object to</param>
+        public void Save(string path) => Reference.Invoke("save", path);
+        
+        /// <returns>a <see cref="ScalaMLWriter"/> instance for this ML instance.</returns>
+        public ScalaMLWriter Write() =>
+            new ScalaMLWriter((JvmObjectReference)Reference.Invoke("write"));
+        
+        /// <returns>an <see cref="ScalaMLReader"/> instance for this ML instance.</returns>
+        public ScalaMLReader<CountVectorizerModel> Read() =>
+            new ScalaMLReader<CountVectorizerModel>((JvmObjectReference)Reference.Invoke("read"));
 
         private static CountVectorizerModel WrapAsCountVectorizerModel(object obj) =>
             new CountVectorizerModel((JvmObjectReference)obj);

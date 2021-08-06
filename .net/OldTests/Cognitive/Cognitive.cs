@@ -1,7 +1,7 @@
 ﻿using System;
 using Microsoft.Spark.Interop;
 using Microsoft.Spark.Interop.Ipc;
-using mmlspark.dotnet.utils;
+using mmlspark.dotnet.wrapper;
 using System.Collections.Generic;
 using Microsoft.Spark.Sql;
 using Microsoft.Spark.Sql.Types;

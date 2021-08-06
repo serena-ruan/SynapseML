@@ -6,9 +6,9 @@ using System;
 using System.Collections.Generic;
 using Microsoft.Spark.Interop;
 using Microsoft.Spark.Interop.Ipc;
-// using Microsoft.Spark.ML.Feature;
 using Microsoft.Spark.Sql;
 using Microsoft.Spark.Sql.Types;
+using mmlspark.dotnet.wrapper;
 using mmlspark.dotnet.utils;
 
 
@@ -17,7 +17,7 @@ namespace featurebase
     /// <summary>
     /// <see cref="Tokenizer"/> implements Tokenizer
     /// </summary>
-    public class Tokenizer : ScalaTransformer<Tokenizer>
+    public class Tokenizer : ScalaTransformer<Tokenizer>, ScalaMLWritable, ScalaMLReadable<Tokenizer>
     {
         private static readonly string s_tokenizerClassName = "org.apache.spark.ml.feature.Tokenizer";
 
@@ -49,7 +49,7 @@ namespace featurebase
         /// </param>
         /// <returns> New Tokenizer object </returns>
         public Tokenizer SetInputCol(string value) =>
-            WrapAsTokenizer(Reference.Invoke("setInputCol", value));
+            WrapAsTokenizer(Reference.Invoke("setInputCol", (object)value));
         
         /// <summary>
         /// Sets outputCol value for <see cref="outputCol"/>
@@ -59,7 +59,7 @@ namespace featurebase
         /// </param>
         /// <returns> New Tokenizer object </returns>
         public Tokenizer SetOutputCol(string value) =>
-            WrapAsTokenizer(Reference.Invoke("setOutputCol", value));
+            WrapAsTokenizer(Reference.Invoke("setOutputCol", (object)value));
 
         /// <summary>
         /// Gets inputCol value for <see cref="inputCol"/>
@@ -80,44 +80,27 @@ namespace featurebase
             (string)Reference.Invoke("getOutputCol");
 
         /// <summary>
-        /// Executes the <see cref="Tokenizer"/> and transforms the DataFrame to include new columns.
-        /// </summary>
-        /// <param name="dataset">The Dataframe to be transformed.</param>
-        /// <returns>
-        /// <see cref="DataFrame"/> containing the original data and new columns.
-        /// </returns>
-        override public DataFrame Transform(DataFrame dataset) =>
-            new DataFrame((JvmObjectReference)Reference.Invoke("transform", dataset));
-        
-        /// <summary>
-        /// Check transform validity and derive the output schema from the input schema.
-        ///
-        /// We check validity for interactions between parameters during transformSchema
-        /// and raise an exception if any parameter value is invalid.
-        ///
-        /// Typical implementation should first conduct verification on schema change and
-        /// parameter validity, including complex parameter interaction checks.
-        /// </summary>
-        /// <param name="schema">
-        /// The <see cref="StructType"/> of the <see cref="DataFrame"/> which will be transformed.
-        /// </param>
-        /// </returns>
-        /// The <see cref="StructType"/> of the output schema that would have been derived from the
-        /// input schema, if Transform had been called.
-        /// </returns>
-        public StructType TransformSchema(StructType schema) =>
-            new StructType(
-                (JvmObjectReference)Reference.Invoke(
-                    "transformSchema",
-                    DataType.FromJson(Reference.Jvm, schema.Json)));
-
-        /// <summary>
         /// Loads the <see cref="Tokenizer"/> that was previously saved using Save(string).
         /// </summary>
         /// <param name="path">The path the previous <see cref="Tokenizer"/> was saved to</param>
         /// <returns>New <see cref="Tokenizer"/> object, loaded from path.</returns>
         public static Tokenizer Load(string path) => WrapAsTokenizer(
             SparkEnvironment.JvmBridge.CallStaticJavaMethod(s_tokenizerClassName, "load", path));
+        
+        /// <summary>
+        /// Saves the object so that it can be loaded later using Load. Note that these objects
+        /// can be shared with Scala by Loading or Saving in Scala.
+        /// </summary>
+        /// <param name="path">The path to save the object to</param>
+        public void Save(string path) => Reference.Invoke("save", path);
+        
+        /// <returns>a <see cref="ScalaMLWriter"/> instance for this ML instance.</returns>
+        public ScalaMLWriter Write() =>
+            new ScalaMLWriter((JvmObjectReference)Reference.Invoke("write"));
+        
+        /// <returns>an <see cref="ScalaMLReader"/> instance for this ML instance.</returns>
+        public ScalaMLReader<Tokenizer> Read() =>
+            new ScalaMLReader<Tokenizer>((JvmObjectReference)Reference.Invoke("read"));
 
         private static Tokenizer WrapAsTokenizer(object obj) =>
             new Tokenizer((JvmObjectReference)obj);

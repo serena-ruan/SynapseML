@@ -7,7 +7,7 @@ using Microsoft.Spark.Interop.Ipc;
 using Microsoft.Spark.ML.Feature;
 using Microsoft.Spark.Sql;
 using Microsoft.Spark.Sql.Types;
-using mmlspark.dotnet.utils;
+using mmlspark.dotnet.wrapper;
 
 namespace mmlspark.stages
 {

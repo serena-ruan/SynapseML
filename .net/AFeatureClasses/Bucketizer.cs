@@ -6,9 +6,9 @@ using System;
 using System.Collections.Generic;
 using Microsoft.Spark.Interop;
 using Microsoft.Spark.Interop.Ipc;
-// using Microsoft.Spark.ML.Feature;
 using Microsoft.Spark.Sql;
 using Microsoft.Spark.Sql.Types;
+using mmlspark.dotnet.wrapper;
 using mmlspark.dotnet.utils;
 
 
@@ -49,7 +49,7 @@ namespace featurebase
         /// </param>
         /// <returns> New Bucketizer object </returns>
         public Bucketizer SetHandleInvalid(string value) =>
-            WrapAsBucketizer(Reference.Invoke("setHandleInvalid", value));
+            WrapAsBucketizer(Reference.Invoke("setHandleInvalid", (object)value));
         
         /// <summary>
         /// Sets inputCol value for <see cref="inputCol"/>
@@ -59,7 +59,7 @@ namespace featurebase
         /// </param>
         /// <returns> New Bucketizer object </returns>
         public Bucketizer SetInputCol(string value) =>
-            WrapAsBucketizer(Reference.Invoke("setInputCol", value));
+            WrapAsBucketizer(Reference.Invoke("setInputCol", (object)value));
         
         /// <summary>
         /// Sets inputCols value for <see cref="inputCols"/>
@@ -79,7 +79,7 @@ namespace featurebase
         /// </param>
         /// <returns> New Bucketizer object </returns>
         public Bucketizer SetOutputCol(string value) =>
-            WrapAsBucketizer(Reference.Invoke("setOutputCol", value));
+            WrapAsBucketizer(Reference.Invoke("setOutputCol", (object)value));
         
         /// <summary>
         /// Sets outputCols value for <see cref="outputCols"/>
@@ -99,7 +99,7 @@ namespace featurebase
         /// </param>
         /// <returns> New Bucketizer object </returns>
         public Bucketizer SetSplits(double[] value) =>
-            WrapAsBucketizer(Reference.Invoke("setSplits", value));
+            WrapAsBucketizer(Reference.Invoke("setSplits", (object)value));
         
         /// <summary>
         /// Sets splitsArray value for <see cref="splitsArray"/>
@@ -175,38 +175,6 @@ namespace featurebase
             (double[][])Reference.Invoke("getSplitsArray");
 
         /// <summary>
-        /// Executes the <see cref="Bucketizer"/> and transforms the DataFrame to include new columns.
-        /// </summary>
-        /// <param name="dataset">The Dataframe to be transformed.</param>
-        /// <returns>
-        /// <see cref="DataFrame"/> containing the original data and new columns.
-        /// </returns>
-        override public DataFrame Transform(DataFrame dataset) =>
-            new DataFrame((JvmObjectReference)Reference.Invoke("transform", dataset));
-        
-        /// <summary>
-        /// Check transform validity and derive the output schema from the input schema.
-        ///
-        /// We check validity for interactions between parameters during transformSchema
-        /// and raise an exception if any parameter value is invalid.
-        ///
-        /// Typical implementation should first conduct verification on schema change and
-        /// parameter validity, including complex parameter interaction checks.
-        /// </summary>
-        /// <param name="schema">
-        /// The <see cref="StructType"/> of the <see cref="DataFrame"/> which will be transformed.
-        /// </param>
-        /// </returns>
-        /// The <see cref="StructType"/> of the output schema that would have been derived from the
-        /// input schema, if Transform had been called.
-        /// </returns>
-        public StructType TransformSchema(StructType schema) =>
-            new StructType(
-                (JvmObjectReference)Reference.Invoke(
-                    "transformSchema",
-                    DataType.FromJson(Reference.Jvm, schema.Json)));
-
-        /// <summary>
         /// Loads the <see cref="Bucketizer"/> that was previously saved using Save(string).
         /// </summary>
         /// <param name="path">The path the previous <see cref="Bucketizer"/> was saved to</param>
@@ -214,10 +182,18 @@ namespace featurebase
         public static Bucketizer Load(string path) => WrapAsBucketizer(
             SparkEnvironment.JvmBridge.CallStaticJavaMethod(s_bucketizerClassName, "load", path));
         
-        /// <returns>a <see cref=\"ScalaMLWriter\"/> instance for this ML instance.</returns>
-        public ScalaMLWriter Write() => 
+        /// <summary>
+        /// Saves the object so that it can be loaded later using Load. Note that these objects
+        /// can be shared with Scala by Loading or Saving in Scala.
+        /// </summary>
+        /// <param name="path">The path to save the object to</param>
+        public void Save(string path) => Reference.Invoke("save", path);
+        
+        /// <returns>a <see cref="ScalaMLWriter"/> instance for this ML instance.</returns>
+        public ScalaMLWriter Write() =>
             new ScalaMLWriter((JvmObjectReference)Reference.Invoke("write"));
-
+        
+        /// <returns>an <see cref="ScalaMLReader"/> instance for this ML instance.</returns>
         public ScalaMLReader<Bucketizer> Read() =>
             new ScalaMLReader<Bucketizer>((JvmObjectReference)Reference.Invoke("read"));
 

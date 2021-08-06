@@ -6,9 +6,9 @@ using System;
 using System.Collections.Generic;
 using Microsoft.Spark.Interop;
 using Microsoft.Spark.Interop.Ipc;
-// using Microsoft.Spark.ML.Feature;
 using Microsoft.Spark.Sql;
 using Microsoft.Spark.Sql.Types;
+using mmlspark.dotnet.wrapper;
 using mmlspark.dotnet.utils;
 
 
@@ -17,7 +17,7 @@ namespace featurebase
     /// <summary>
     /// <see cref="SQLTransformer"/> implements SQLTransformer
     /// </summary>
-    public class SQLTransformer : ScalaTransformer<SQLTransformer>
+    public class SQLTransformer : ScalaTransformer<SQLTransformer>, ScalaMLWritable, ScalaMLReadable<SQLTransformer>
     {
         private static readonly string s_sQLTransformerClassName = "org.apache.spark.ml.feature.SQLTransformer";
 
@@ -49,7 +49,7 @@ namespace featurebase
         /// </param>
         /// <returns> New SQLTransformer object </returns>
         public SQLTransformer SetStatement(string value) =>
-            WrapAsSQLTransformer(Reference.Invoke("setStatement", value));
+            WrapAsSQLTransformer(Reference.Invoke("setStatement", (object)value));
 
         /// <summary>
         /// Gets statement value for <see cref="statement"/>
@@ -61,44 +61,27 @@ namespace featurebase
             (string)Reference.Invoke("getStatement");
 
         /// <summary>
-        /// Executes the <see cref="SQLTransformer"/> and transforms the DataFrame to include new columns.
-        /// </summary>
-        /// <param name="dataset">The Dataframe to be transformed.</param>
-        /// <returns>
-        /// <see cref="DataFrame"/> containing the original data and new columns.
-        /// </returns>
-        override public DataFrame Transform(DataFrame dataset) =>
-            new DataFrame((JvmObjectReference)Reference.Invoke("transform", dataset));
-        
-        /// <summary>
-        /// Check transform validity and derive the output schema from the input schema.
-        ///
-        /// We check validity for interactions between parameters during transformSchema
-        /// and raise an exception if any parameter value is invalid.
-        ///
-        /// Typical implementation should first conduct verification on schema change and
-        /// parameter validity, including complex parameter interaction checks.
-        /// </summary>
-        /// <param name="schema">
-        /// The <see cref="StructType"/> of the <see cref="DataFrame"/> which will be transformed.
-        /// </param>
-        /// </returns>
-        /// The <see cref="StructType"/> of the output schema that would have been derived from the
-        /// input schema, if Transform had been called.
-        /// </returns>
-        public StructType TransformSchema(StructType schema) =>
-            new StructType(
-                (JvmObjectReference)Reference.Invoke(
-                    "transformSchema",
-                    DataType.FromJson(Reference.Jvm, schema.Json)));
-
-        /// <summary>
         /// Loads the <see cref="SQLTransformer"/> that was previously saved using Save(string).
         /// </summary>
         /// <param name="path">The path the previous <see cref="SQLTransformer"/> was saved to</param>
         /// <returns>New <see cref="SQLTransformer"/> object, loaded from path.</returns>
         public static SQLTransformer Load(string path) => WrapAsSQLTransformer(
             SparkEnvironment.JvmBridge.CallStaticJavaMethod(s_sQLTransformerClassName, "load", path));
+        
+        /// <summary>
+        /// Saves the object so that it can be loaded later using Load. Note that these objects
+        /// can be shared with Scala by Loading or Saving in Scala.
+        /// </summary>
+        /// <param name="path">The path to save the object to</param>
+        public void Save(string path) => Reference.Invoke("save", path);
+        
+        /// <returns>a <see cref="ScalaMLWriter"/> instance for this ML instance.</returns>
+        public ScalaMLWriter Write() =>
+            new ScalaMLWriter((JvmObjectReference)Reference.Invoke("write"));
+        
+        /// <returns>an <see cref="ScalaMLReader"/> instance for this ML instance.</returns>
+        public ScalaMLReader<SQLTransformer> Read() =>
+            new ScalaMLReader<SQLTransformer>((JvmObjectReference)Reference.Invoke("read"));
 
         private static SQLTransformer WrapAsSQLTransformer(object obj) =>
             new SQLTransformer((JvmObjectReference)obj);

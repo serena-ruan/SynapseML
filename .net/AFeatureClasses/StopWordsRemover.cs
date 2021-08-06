@@ -6,9 +6,9 @@ using System;
 using System.Collections.Generic;
 using Microsoft.Spark.Interop;
 using Microsoft.Spark.Interop.Ipc;
-// using Microsoft.Spark.ML.Feature;
 using Microsoft.Spark.Sql;
 using Microsoft.Spark.Sql.Types;
+using mmlspark.dotnet.wrapper;
 using mmlspark.dotnet.utils;
 
 
@@ -17,7 +17,7 @@ namespace featurebase
     /// <summary>
     /// <see cref="StopWordsRemover"/> implements StopWordsRemover
     /// </summary>
-    public class StopWordsRemover : ScalaTransformer<StopWordsRemover>
+    public class StopWordsRemover : ScalaTransformer<StopWordsRemover>, ScalaMLWritable, ScalaMLReadable<StopWordsRemover>
     {
         private static readonly string s_stopWordsRemoverClassName = "org.apache.spark.ml.feature.StopWordsRemover";
 
@@ -49,7 +49,7 @@ namespace featurebase
         /// </param>
         /// <returns> New StopWordsRemover object </returns>
         public StopWordsRemover SetCaseSensitive(bool value) =>
-            WrapAsStopWordsRemover(Reference.Invoke("setCaseSensitive", value));
+            WrapAsStopWordsRemover(Reference.Invoke("setCaseSensitive", (object)value));
         
         /// <summary>
         /// Sets inputCol value for <see cref="inputCol"/>
@@ -59,7 +59,7 @@ namespace featurebase
         /// </param>
         /// <returns> New StopWordsRemover object </returns>
         public StopWordsRemover SetInputCol(string value) =>
-            WrapAsStopWordsRemover(Reference.Invoke("setInputCol", value));
+            WrapAsStopWordsRemover(Reference.Invoke("setInputCol", (object)value));
         
         /// <summary>
         /// Sets inputCols value for <see cref="inputCols"/>
@@ -68,8 +68,8 @@ namespace featurebase
         /// input column names
         /// </param>
         /// <returns> New StopWordsRemover object </returns>
-        public StopWordsRemover SetInputCols(IEnumerable<string> value) =>
-            WrapAsStopWordsRemover(Reference.Invoke("setInputCols", value));
+        public StopWordsRemover SetInputCols(string[] value) =>
+            WrapAsStopWordsRemover(Reference.Invoke("setInputCols", (object)value));
         
         /// <summary>
         /// Sets locale value for <see cref="locale"/>
@@ -79,7 +79,7 @@ namespace featurebase
         /// </param>
         /// <returns> New StopWordsRemover object </returns>
         public StopWordsRemover SetLocale(string value) =>
-            WrapAsStopWordsRemover(Reference.Invoke("setLocale", value));
+            WrapAsStopWordsRemover(Reference.Invoke("setLocale", (object)value));
         
         /// <summary>
         /// Sets outputCol value for <see cref="outputCol"/>
@@ -89,7 +89,7 @@ namespace featurebase
         /// </param>
         /// <returns> New StopWordsRemover object </returns>
         public StopWordsRemover SetOutputCol(string value) =>
-            WrapAsStopWordsRemover(Reference.Invoke("setOutputCol", value));
+            WrapAsStopWordsRemover(Reference.Invoke("setOutputCol", (object)value));
         
         /// <summary>
         /// Sets outputCols value for <see cref="outputCols"/>
@@ -98,8 +98,8 @@ namespace featurebase
         /// output column names
         /// </param>
         /// <returns> New StopWordsRemover object </returns>
-        public StopWordsRemover SetOutputCols(IEnumerable<string> value) =>
-            WrapAsStopWordsRemover(Reference.Invoke("setOutputCols", value));
+        public StopWordsRemover SetOutputCols(string[] value) =>
+            WrapAsStopWordsRemover(Reference.Invoke("setOutputCols", (object)value));
         
         /// <summary>
         /// Sets stopWords value for <see cref="stopWords"/>
@@ -108,8 +108,8 @@ namespace featurebase
         /// the words to be filtered out
         /// </param>
         /// <returns> New StopWordsRemover object </returns>
-        public StopWordsRemover SetStopWords(IEnumerable<string> value) =>
-            WrapAsStopWordsRemover(Reference.Invoke("setStopWords", value));
+        public StopWordsRemover SetStopWords(string[] value) =>
+            WrapAsStopWordsRemover(Reference.Invoke("setStopWords", (object)value));
 
         /// <summary>
         /// Gets caseSensitive value for <see cref="caseSensitive"/>
@@ -135,8 +135,8 @@ namespace featurebase
         /// <returns>
         /// inputCols: input column names
         /// </returns>
-        public IEnumerable<string> GetInputCols() =>
-            (IEnumerable<string>)Reference.Invoke("getInputCols");
+        public string[] GetInputCols() =>
+            (string[])Reference.Invoke("getInputCols");
         
         /// <summary>
         /// Gets locale value for <see cref="locale"/>
@@ -162,8 +162,8 @@ namespace featurebase
         /// <returns>
         /// outputCols: output column names
         /// </returns>
-        public IEnumerable<string> GetOutputCols() =>
-            (IEnumerable<string>)Reference.Invoke("getOutputCols");
+        public string[] GetOutputCols() =>
+            (string[])Reference.Invoke("getOutputCols");
         
         /// <summary>
         /// Gets stopWords value for <see cref="stopWords"/>
@@ -171,40 +171,8 @@ namespace featurebase
         /// <returns>
         /// stopWords: the words to be filtered out
         /// </returns>
-        public IEnumerable<string> GetStopWords() =>
-            (IEnumerable<string>)Reference.Invoke("getStopWords");
-
-        /// <summary>
-        /// Executes the <see cref="StopWordsRemover"/> and transforms the DataFrame to include new columns.
-        /// </summary>
-        /// <param name="dataset">The Dataframe to be transformed.</param>
-        /// <returns>
-        /// <see cref="DataFrame"/> containing the original data and new columns.
-        /// </returns>
-        override public DataFrame Transform(DataFrame dataset) =>
-            new DataFrame((JvmObjectReference)Reference.Invoke("transform", dataset));
-        
-        /// <summary>
-        /// Check transform validity and derive the output schema from the input schema.
-        ///
-        /// We check validity for interactions between parameters during transformSchema
-        /// and raise an exception if any parameter value is invalid.
-        ///
-        /// Typical implementation should first conduct verification on schema change and
-        /// parameter validity, including complex parameter interaction checks.
-        /// </summary>
-        /// <param name="schema">
-        /// The <see cref="StructType"/> of the <see cref="DataFrame"/> which will be transformed.
-        /// </param>
-        /// </returns>
-        /// The <see cref="StructType"/> of the output schema that would have been derived from the
-        /// input schema, if Transform had been called.
-        /// </returns>
-        public StructType TransformSchema(StructType schema) =>
-            new StructType(
-                (JvmObjectReference)Reference.Invoke(
-                    "transformSchema",
-                    DataType.FromJson(Reference.Jvm, schema.Json)));
+        public string[] GetStopWords() =>
+            (string[])Reference.Invoke("getStopWords");
 
         /// <summary>
         /// Loads the <see cref="StopWordsRemover"/> that was previously saved using Save(string).
@@ -213,6 +181,21 @@ namespace featurebase
         /// <returns>New <see cref="StopWordsRemover"/> object, loaded from path.</returns>
         public static StopWordsRemover Load(string path) => WrapAsStopWordsRemover(
             SparkEnvironment.JvmBridge.CallStaticJavaMethod(s_stopWordsRemoverClassName, "load", path));
+        
+        /// <summary>
+        /// Saves the object so that it can be loaded later using Load. Note that these objects
+        /// can be shared with Scala by Loading or Saving in Scala.
+        /// </summary>
+        /// <param name="path">The path to save the object to</param>
+        public void Save(string path) => Reference.Invoke("save", path);
+        
+        /// <returns>a <see cref="ScalaMLWriter"/> instance for this ML instance.</returns>
+        public ScalaMLWriter Write() =>
+            new ScalaMLWriter((JvmObjectReference)Reference.Invoke("write"));
+        
+        /// <returns>an <see cref="ScalaMLReader"/> instance for this ML instance.</returns>
+        public ScalaMLReader<StopWordsRemover> Read() =>
+            new ScalaMLReader<StopWordsRemover>((JvmObjectReference)Reference.Invoke("read"));
 
         private static StopWordsRemover WrapAsStopWordsRemover(object obj) =>
             new StopWordsRemover((JvmObjectReference)obj);

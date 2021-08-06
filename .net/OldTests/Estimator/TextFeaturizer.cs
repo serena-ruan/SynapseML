@@ -2,7 +2,7 @@
 using Microsoft.Spark.Interop;
 using Microsoft.Spark.Interop.Ipc;
 using Microsoft.Spark.ML.Feature;
-using mmlspark.dotnet.utils;
+using mmlspark.dotnet.wrapper;
 using Microsoft.Spark.Sql;
 using Microsoft.Spark.Sql.Types;
 
