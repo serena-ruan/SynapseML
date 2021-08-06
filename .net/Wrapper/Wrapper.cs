@@ -182,7 +182,7 @@ namespace mmlspark.dotnet.wrapper
         }
 
         /// <summary>
-        /// Executes the <see cref="Bucketizer"/> and transforms the DataFrame to include new columns.
+        /// Executes the transformer and transforms the DataFrame to include new columns.
         /// </summary>
         /// <param name="dataset">The Dataframe to be transformed.</param>
         /// <returns>
