@@ -9,10 +9,10 @@ import BuildUtils._
 import xerial.sbt.Sonatype._
 
 val condaEnvName = "mmlspark"
-val sparkVersion = "3.1.2"
+val sparkVersion = "3.2.0"
 name := "mmlspark"
 ThisBuild / organization := "com.microsoft.ml.spark"
-ThisBuild / scalaVersion := "2.12.10"
+ThisBuild / scalaVersion := "2.12.15"
 
 val scalaMajorVersion = 2.12
 
