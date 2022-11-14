@@ -63,7 +63,7 @@ jobs:
         python-version: 3.8.8
     - name: Setup Miniconda
       if: startsWith(steps.getGitTag.outputs.gittag, 'v')
-      uses: conda-incubator/setup-miniconda@v2.1.1
+      uses: conda-incubator/setup-miniconda@v2.2.0
       with:
         python-version: 3.8.8
         environment-file: environment.yml

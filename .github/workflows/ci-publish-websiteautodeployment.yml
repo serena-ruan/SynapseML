@@ -43,7 +43,7 @@ jobs:
         java-version: '11'
         distribution: 'temurin'
     - name: Setup Miniconda
-      uses: conda-incubator/setup-miniconda@v2.1.1
+      uses: conda-incubator/setup-miniconda@v2.2.0
       with:
         python-version: 3.8.8
         environment-file: environment.yml
