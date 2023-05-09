@@ -3,6 +3,7 @@
 
 package com.microsoft.azure.synapse.ml.io.http
 
+import com.microsoft.azure.synapse.ml.logging.SynapseMLLogging
 import org.apache.commons.io.IOUtils
 import org.apache.http.client.config.RequestConfig
 import org.apache.http.client.methods.{CloseableHttpResponse, HttpPost, HttpRequestBase}
@@ -38,7 +39,7 @@ private[ml] trait HTTPClient extends BaseClient
     .setSocketTimeout(requestTimeout)
     .build()
 
-  protected val connectionManager = {
+  protected val connectionManager: PoolingHttpClientConnectionManager = {
     val cm = new PoolingHttpClientConnectionManager()
     cm.setDefaultMaxPerRoute(Int.MaxValue) // Spark will handle the threading to avoid going over limits
     cm.setMaxTotal(Int.MaxValue)
@@ -82,7 +83,7 @@ object HandlingUtils extends SparkLogging {
     }
   }
 
-  //noinspection ScalaStyle
+  //scalastyle:off cyclomatic.complexity
   private[ml] def sendWithRetries(client: CloseableHttpClient,
                                   request: HttpRequestBase,
                                   retriesLeft: Array[Int]): CloseableHttpResponse = {
@@ -136,6 +137,7 @@ object HandlingUtils extends SparkLogging {
       case e: java.net.SocketTimeoutException => keepTrying(client, request, retriesLeft, e)
     }
   }
+  //scalastyle:on cyclomatic.complexity
 
   def advanced(retryTimes: Int*)(client: CloseableHttpClient,
                                  request: HTTPRequestData): HTTPResponseData = {
@@ -145,10 +147,10 @@ object HandlingUtils extends SparkLogging {
         case r: HttpPost => Try(IOUtils.toString(r.getEntity.getContent, "UTF-8")).getOrElse("")
         case r => r.getURI
       }
-      logInfo(s"sending $message")
+      SynapseMLLogging.logMessage(s"sending $message")
       val start = System.currentTimeMillis()
       val resp = sendWithRetries(client, req, retryTimes.toArray)
-      logInfo(s"finished sending (${System.currentTimeMillis() - start}ms) $message")
+      SynapseMLLogging.logMessage(s"finished sending (${System.currentTimeMillis() - start}ms) $message")
       val respData = convertAndClose(resp)
       req.releaseConnection()
       respData

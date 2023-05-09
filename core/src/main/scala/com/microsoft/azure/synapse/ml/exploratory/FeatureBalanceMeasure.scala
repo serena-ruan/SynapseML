@@ -5,7 +5,7 @@ package com.microsoft.azure.synapse.ml.exploratory
 
 import com.microsoft.azure.synapse.ml.codegen.Wrappable
 import com.microsoft.azure.synapse.ml.core.schema.DatasetExtensions
-import com.microsoft.azure.synapse.ml.logging.BasicLogging
+import com.microsoft.azure.synapse.ml.logging.SynapseMLLogging
 import org.apache.spark.ml.param._
 import org.apache.spark.ml.param.shared.HasLabelCol
 import org.apache.spark.ml.util.Identifiable
@@ -41,7 +41,7 @@ class FeatureBalanceMeasure(override val uid: String)
     with HasLabelCol
     with ComplexParamsWritable
     with Wrappable
-    with BasicLogging {
+    with SynapseMLLogging {
 
   logClass()
 
@@ -128,7 +128,7 @@ class FeatureBalanceMeasure(override val uid: String)
 
       df.unpersist
       calculateParity(associationMetricsDf, featureValueCol)
-    })
+    }, dataset.columns.length)
   }
 
   private def calculateParity(associationMetricsDf: DataFrame, featureValueCol: String): DataFrame = {

@@ -4,7 +4,7 @@
 package com.microsoft.azure.synapse.ml.stages
 
 import com.microsoft.azure.synapse.ml.codegen.Wrappable
-import com.microsoft.azure.synapse.ml.logging.BasicLogging
+import com.microsoft.azure.synapse.ml.logging.SynapseMLLogging
 import org.apache.spark.ml.Transformer
 import org.apache.spark.ml.param._
 import org.apache.spark.ml.util.{DefaultParamsReadable, DefaultParamsWritable, Identifiable}
@@ -17,7 +17,7 @@ object Repartition extends DefaultParamsReadable[Repartition]
 /** Partitions the dataset into n partitions
   * @param uid The id of the module
   */
-class Repartition(val uid: String) extends Transformer with Wrappable with DefaultParamsWritable with BasicLogging {
+class Repartition(val uid: String) extends Transformer with Wrappable with DefaultParamsWritable with SynapseMLLogging {
   logClass()
 
   def this() = this(Identifiable.randomUID("Repartition"))
@@ -56,7 +56,7 @@ class Repartition(val uid: String) extends Transformer with Wrappable with Defau
         dataset.sqlContext.createDataFrame(
           dataset.rdd.repartition(getN).asInstanceOf[RDD[Row]],
           dataset.schema)
-    })
+    }, dataset.columns.length)
   }
 
   def transformSchema(schema: StructType): StructType = {

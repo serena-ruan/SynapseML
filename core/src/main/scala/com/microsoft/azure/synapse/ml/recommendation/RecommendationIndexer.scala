@@ -4,7 +4,7 @@
 package com.microsoft.azure.synapse.ml.recommendation
 
 import com.microsoft.azure.synapse.ml.codegen.Wrappable
-import com.microsoft.azure.synapse.ml.logging.BasicLogging
+import com.microsoft.azure.synapse.ml.logging.SynapseMLLogging
 import com.microsoft.azure.synapse.ml.param.TransformerParam
 import org.apache.spark.ml.attribute.NominalAttribute
 import org.apache.spark.ml.feature.{StringIndexer, StringIndexerModel}
@@ -17,7 +17,7 @@ import org.apache.spark.sql.types.{NumericType, StringType, StructType}
 import org.apache.spark.sql.{DataFrame, Dataset}
 
 class RecommendationIndexer(override val uid: String)
-  extends Estimator[RecommendationIndexerModel] with RecommendationIndexerBase with Wrappable with BasicLogging {
+  extends Estimator[RecommendationIndexerModel] with RecommendationIndexerBase with Wrappable with SynapseMLLogging {
   logClass()
 
   def this() = this(Identifiable.randomUID("RecommendationIndexer"))
@@ -42,7 +42,7 @@ class RecommendationIndexer(override val uid: String)
         .setUserOutputCol(getUserOutputCol)
         .setItemInputCol(getItemInputCol)
         .setItemOutputCol(getItemOutputCol)
-    })
+    }, dataset.columns.length)
   }
 
   override def copy(extra: ParamMap): Estimator[RecommendationIndexerModel] = defaultCopy(extra)
@@ -52,14 +52,15 @@ class RecommendationIndexer(override val uid: String)
 object RecommendationIndexer extends ComplexParamsReadable[RecommendationIndexer]
 
 class RecommendationIndexerModel(override val uid: String) extends Model[RecommendationIndexerModel] with
-  RecommendationIndexerBase with Wrappable with BasicLogging {
+  RecommendationIndexerBase with Wrappable with SynapseMLLogging {
   logClass()
 
   override def copy(extra: ParamMap): RecommendationIndexerModel = defaultCopy(extra)
 
   override def transform(dataset: Dataset[_]): DataFrame = {
     logTransform[DataFrame](
-      getItemIndexModel.transform(getUserIndexModel.transform(dataset))
+      getItemIndexModel.transform(getUserIndexModel.transform(dataset)),
+      dataset.columns.length
     )
   }
 

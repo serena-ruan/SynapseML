@@ -7,7 +7,7 @@ import breeze.linalg.{*, DenseMatrix => BDM, DenseVector => BDV}
 import com.microsoft.azure.synapse.ml.codegen.Wrappable
 import com.microsoft.azure.synapse.ml.core.schema.DatasetExtensions
 import com.microsoft.azure.synapse.ml.core.utils.BreezeUtils._
-import com.microsoft.azure.synapse.ml.logging.BasicLogging
+import com.microsoft.azure.synapse.ml.logging.SynapseMLLogging
 import org.apache.spark.ml.Transformer
 import org.apache.spark.ml.linalg.SQLDataTypes.VectorType
 import org.apache.spark.ml.linalg.{Vector, Vectors}
@@ -38,9 +38,9 @@ abstract class KernelSHAPBase(override val uid: String)
   extends LocalExplainer
     with KernelSHAPParams
     with Wrappable
-    with BasicLogging {
+    with SynapseMLLogging {
 
-  override def transform(instances: Dataset[_]): DataFrame = logTransform {
+  override def transform(instances: Dataset[_]): DataFrame = logTransform ({
     import instances.sparkSession.implicits._
     this.validateSchema(instances.schema)
 
@@ -91,7 +91,7 @@ abstract class KernelSHAPBase(override val uid: String)
     }.toDF(idCol, this.getOutputCol, this.getMetricsCol)
 
     preprocessed.join(fitted, Seq(idCol), "inner").drop(idCol)
-  }
+  }, instances.columns.length)
 
   override def copy(extra: ParamMap): Transformer = defaultCopy(extra)
 

@@ -6,7 +6,8 @@ package com.microsoft.azure.synapse.ml.exploratory
 import breeze.stats.distributions.ChiSquared
 import com.microsoft.azure.synapse.ml.codegen.Wrappable
 import com.microsoft.azure.synapse.ml.core.schema.DatasetExtensions
-import com.microsoft.azure.synapse.ml.logging.BasicLogging
+import com.microsoft.azure.synapse.ml.logging.SynapseMLLogging
+import com.microsoft.azure.synapse.ml.param.ArrayMapParam
 import org.apache.spark.ml.param._
 import org.apache.spark.ml.util.Identifiable
 import org.apache.spark.ml.{ComplexParamsReadable, ComplexParamsWritable, Transformer}
@@ -14,6 +15,8 @@ import org.apache.spark.sql._
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
 
+import java.util
+import scala.collection.JavaConverters._
 import scala.language.postfixOps
 
 /** This transformer computes data balance measures based on a reference distribution.
@@ -40,7 +43,7 @@ class DistributionBalanceMeasure(override val uid: String)
     with DataBalanceParams
     with ComplexParamsWritable
     with Wrappable
-    with BasicLogging {
+    with SynapseMLLogging {
 
   logClass()
 
@@ -56,6 +59,27 @@ class DistributionBalanceMeasure(override val uid: String)
 
   def setFeatureNameCol(value: String): this.type = set(featureNameCol, value)
 
+  val referenceDistribution = new ArrayMapParam(
+    this,
+    "referenceDistribution",
+    "An ordered list of reference distributions that correspond to each of the sensitive columns."
+  )
+
+  val emptyReferenceDistribution: Array[Map[String, Double]] = Array.empty
+
+  def getReferenceDistribution: Array[Map[String, Double]] =
+    if (isDefined(referenceDistribution))
+      $(referenceDistribution).map(_.mapValues(_.asInstanceOf[Double]).map(identity))
+    else emptyReferenceDistribution
+
+  def setReferenceDistribution(value: Array[Map[String, Double]]): this.type =
+    set(referenceDistribution, value.map(_.mapValues(_.asInstanceOf[Any])))
+
+  def setReferenceDistribution(value: util.ArrayList[util.HashMap[String, Double]]): this.type = {
+    val arrayMap = value.asScala.toArray.map(_.asScala.toMap.mapValues(_.asInstanceOf[Any]))
+    set(referenceDistribution, arrayMap)
+  }
+
   setDefault(
     featureNameCol -> "FeatureName",
     outputCol -> "DistributionBalanceMeasure"
@@ -65,6 +89,15 @@ class DistributionBalanceMeasure(override val uid: String)
     n: Int => {
       _: String =>
         1d / n
+    }
+  }
+
+  private val customDistribution: Map[String, Double] => String => Double = {
+    dist: Map[String, Double] => {
+      // NOTE: If the custom distribution doesn't have the col value, return a default probability of 0
+      // This assumes that the reference distribution does not contain the col value at all
+      s: String =>
+        dist.getOrElse(s, 0d)
     }
   }
 
@@ -87,31 +120,31 @@ class DistributionBalanceMeasure(override val uid: String)
 
       //noinspection ScalaStyle
       if (getVerbose)
-        featureStats.cache.show(numRows = 20, truncate = false)
-
-      // TODO (for v2): Introduce a referenceDistribution function param for user to override the uniform distribution
-      val referenceDistribution = uniformDistribution
+        featureStats.cache.show(numRows = 20, truncate = false)  //scalastyle:ignore magic.number
 
       df.unpersist
-      calculateDistributionMeasures(featureStats, featureProbCol, featureCountCol, numRows, referenceDistribution)
-    })
+      calculateDistributionMeasures(featureStats, featureProbCol, featureCountCol, numRows)
+    }, dataset.columns.length)
   }
 
   private def calculateDistributionMeasures(featureStats: DataFrame,
                                             obsFeatureProbCol: String,
                                             obsFeatureCountCol: String,
-                                            numRows: Double,
-                                            referenceDistribution: Int => String => Double): DataFrame = {
-    val distributionMeasures = getSensitiveCols.map {
-      sensitiveCol =>
+                                            numRows: Double): DataFrame = {
+    val distributionMeasures = getSensitiveCols.zipWithIndex.map {
+      case (sensitiveCol, i) =>
         val observed = featureStats
           .groupBy(sensitiveCol)
           .agg(sum(obsFeatureProbCol).alias(obsFeatureProbCol), sum(obsFeatureCountCol).alias(obsFeatureCountCol))
 
         val numFeatures = observed.count.toInt
-        val refDistFunc = udf(referenceDistribution(numFeatures))
         val refFeatureProbCol = DatasetExtensions.findUnusedColumnName("refFeatureProb", featureStats.schema)
         val refFeatureCountCol = DatasetExtensions.findUnusedColumnName("refFeatureCount", featureStats.schema)
+
+        val refDist: String => Double =
+          if (!isDefined(referenceDistribution) || getReferenceDistribution(i).isEmpty) uniformDistribution(numFeatures)
+          else customDistribution(getReferenceDistribution(i))
+        val refDistFunc = udf(refDist)
 
         val observedWithRef = observed
           .withColumn(refFeatureProbCol, refDistFunc(col(sensitiveCol)))
@@ -146,6 +179,15 @@ class DistributionBalanceMeasure(override val uid: String)
         Nil
     )
   }
+
+  override def validateSchema(schema: StructType): Unit = {
+    super.validateSchema(schema)
+
+    if (isDefined(referenceDistribution) && getReferenceDistribution.length != getSensitiveCols.length) {
+      throw new Exception("The reference distribution must have the same length and order as the sensitive columns: "
+        + getSensitiveCols.mkString(", "))
+    }
+  }
 }
 
 object DistributionBalanceMeasure extends ComplexParamsReadable[DistributionBalanceMeasure]
@@ -160,8 +202,14 @@ private[exploratory] object DistributionMetrics {
   val CHISQUAREDTESTSTATISTIC = "chi_sq_stat"
   val CHISQUAREDPVALUE = "chi_sq_p_value"
 
-  val METRICS = Seq(KLDIVERGENCE, JSDISTANCE, INFNORMDISTANCE, TOTALVARIATIONDISTANCE, WASSERSTEINDISTANCE,
-    CHISQUAREDTESTSTATISTIC, CHISQUAREDPVALUE)
+  val METRICS: Seq[String] = Seq(
+    KLDIVERGENCE,
+    JSDISTANCE,
+    INFNORMDISTANCE,
+    TOTALVARIATIONDISTANCE,
+    WASSERSTEINDISTANCE,
+    CHISQUAREDTESTSTATISTIC,
+    CHISQUAREDPVALUE)
 }
 
 //noinspection SpellCheckingInspection
@@ -206,23 +254,32 @@ private[exploratory] case class DistributionMetrics(numFeatures: Int,
   }
 
   // Calculates Pearson's chi-squared statistic
-  def chiSquaredTestStatistic: Column =
-    sum(pow(col(obsFeatureCountCol) - col(refFeatureCountCol), 2) / col(refFeatureCountCol))
+  def chiSquaredTestStatistic: Column = sum(
+    // If expected is zero and observed is not zero, the test assumes observed is impossible so Chi^2 value becomes +inf
+    when(col(refFeatureCountCol) === 0 && col(obsFeatureCountCol) =!= 0, lit(Double.PositiveInfinity))
+      .otherwise(pow(col(obsFeatureCountCol) - col(refFeatureCountCol), 2) / col(refFeatureCountCol)))
 
   // Calculates left-tailed p-value from degrees of freedom and chi-squared test statistic
   def chiSquaredPValue: Column = {
     val degOfFreedom = numFeatures - 1
     val scoreCol = chiSquaredTestStatistic
-    val chiSqPValueUdf = udf({
-      score: Double =>
-        1d - ChiSquared(degOfFreedom).cdf(score)
-    })
+    val chiSqPValueUdf = udf(
+      (score: Double) => score match {
+        // limit of CDF as x approaches +inf is 1 (https://en.wikipedia.org/wiki/Cumulative_distribution_function)
+        case Double.PositiveInfinity => 1d
+        case _ => 1 - ChiSquared(degOfFreedom).cdf(score)
+      }
+    )
     chiSqPValueUdf(scoreCol)
   }
 
   private def entropy(distA: Column, distB: Option[Column] = None): Column = {
     if (distB.isDefined) {
-      sum(distA * log(distA / distB.get))
+      // Using same cases as scipy (https://docs.scipy.org/doc/scipy/reference/generated/scipy.special.rel_entr.html)
+      val entropies = when(distA === 0d && distB.get >= 0d, lit(0d))
+        .when(distA > 0d && distB.get > 0d, distA * log(distA / distB.get))
+        .otherwise(lit(Double.PositiveInfinity))
+      sum(entropies)
     } else {
       sum(distA * log(distA)) * -1d
     }

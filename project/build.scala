@@ -57,6 +57,8 @@ object BuildUtils {
     }
   }
 
+  def runCmdStr(cmd: String): Unit = runCmd(cmd.split(" "), new File("."), Map())
+
   def condaEnvName: String = "synapseml"
 
   def activateCondaEnv: Seq[String] = {
@@ -82,9 +84,9 @@ object BuildUtils {
     runCmd(Seq("dotnet", "pack", "--output", outputDir), workDir)
 
   def publishDotnetAssemblyCmd(packagePath: String,
-                               sleetConfigDir: File): Unit =
+                               sleetConfigFile: File): Unit =
     runCmd(
-      Seq("sleet", "push", packagePath, "--config", join(sleetConfigDir, "sleet.json").getAbsolutePath,
+      Seq("sleet", "push", packagePath, "--config", sleetConfigFile.getAbsolutePath,
         "--source", "SynapseMLNuget", "--force")
     )
 

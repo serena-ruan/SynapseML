@@ -4,15 +4,16 @@ channels:
   - default
 dependencies:
   - python=3.8.8
-  - pyspark=3.2.2
   - requests=2.26.0
   - pip=21.3
   - r-base=4.1.1
-  - r-sparklyr=1.7.6
+  - r-sparklyr=1.8.1
   - r-devtools=2.4.2
-  - pyarrow>=0.15.0
-  - numpy>=1.19.3
   - pip:
+    - pyarrow>=0.15.0
+    - numpy>=1.19.3
+    - pyspark==3.2.3
+    - pandas==1.2.5
     - wheel
     - sphinx==4.2.0
     - sphinx_paramlinks==0.5.2
@@ -21,6 +22,10 @@ dependencies:
     - pytest
     - pytest-cov
     - nbconvert
+    - nbformat
+    - PyGithub
+    - tqdm
+    - build
     - ipython
     - pytest-codeblocks
     - azure-storage-blob
@@ -35,3 +40,7 @@ dependencies:
     - onnxmltools==1.7.0
     - matplotlib
     - Pillow
+    - transformers==4.15.0
+    - huggingface-hub>=0.8.1
+    - langchain==0.0.151
+    - openai==0.27.5

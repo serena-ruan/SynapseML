@@ -4,7 +4,7 @@
 package com.microsoft.azure.synapse.ml.recommendation
 
 import com.microsoft.azure.synapse.ml.codegen.Wrappable
-import com.microsoft.azure.synapse.ml.logging.BasicLogging
+import com.microsoft.azure.synapse.ml.logging.SynapseMLLogging
 import com.microsoft.azure.synapse.ml.param.{ModelParam, TypedDoubleArrayParam}
 import org.apache.spark.ml.evaluation.Evaluator
 import org.apache.spark.ml.param._
@@ -24,7 +24,7 @@ import scala.util.Random
 
 class RankingTrainValidationSplit(override val uid: String) extends Estimator[RankingTrainValidationSplitModel]
   with RankingTrainValidationSplitParams with Wrappable with ComplexParamsWritable
-  with RecommendationParams with BasicLogging {
+  with RecommendationParams with SynapseMLLogging {
   logClass()
 
   override lazy val pyInternalWrapper: Boolean = true
@@ -142,7 +142,7 @@ class RankingTrainValidationSplit(override val uid: String) extends Estimator[Ra
         .setBestModel(est.fit(dataset, epm(bestIndex)))
         .setValidationMetrics(metrics)
         .setParent(this))
-    })
+    }, dataset.columns.length)
   }
 
   override def copy(extra: ParamMap): RankingTrainValidationSplit = defaultCopy(extra)
@@ -168,7 +168,7 @@ class RankingTrainValidationSplit(override val uid: String) extends Estimator[Ra
   def filterRatings(dataset: Dataset[_]): DataFrame = filterByUserRatingCount(dataset)
     .join(filterByItemCount(dataset), $(userCol))
 
-  def splitDF(dataset: DataFrame): Array[DataFrame] = {
+  def splitDF(dataset: DataFrame): Array[DataFrame] = {  //scalastyle:ignore method.length
     val shuffleFlag = true
     val shuffleBC = dataset.sparkSession.sparkContext.broadcast(shuffleFlag)
 
@@ -292,7 +292,7 @@ object RankingTrainValidationSplit extends ComplexParamsReadable[RankingTrainVal
 class RankingTrainValidationSplitModel(
                                         override val uid: String)
   extends Model[RankingTrainValidationSplitModel] with Wrappable
-    with ComplexParamsWritable with BasicLogging {
+    with ComplexParamsWritable with SynapseMLLogging {
   logClass()
 
   override protected lazy val pyInternalWrapper = true
@@ -327,7 +327,7 @@ class RankingTrainValidationSplitModel(
 
       //sort to pass unit test
       getBestModel.transform(dataset).sort("prediction")
-    })
+    }, dataset.columns.length)
   }
 
   override def transformSchema(schema: StructType): StructType = {

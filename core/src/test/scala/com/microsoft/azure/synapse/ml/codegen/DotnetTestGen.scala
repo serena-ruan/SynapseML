@@ -12,7 +12,6 @@ import org.apache.commons.io.FileUtils
 import spray.json._
 
 import java.io.File
-import java.nio.file.Path
 
 
 object DotnetTestGen {
@@ -56,7 +55,7 @@ object DotnetTestGen {
          |""".stripMargin)
   }
 
-  // noinspection ScalaStyle
+  // scalastyle:off method.length
   def generateDotnetTestProjFile(conf: CodegenConfig): Unit = {
     val dir = new File(conf.dotnetTestDir, "SynapseMLtest")
     if (!dir.exists()) {
@@ -90,7 +89,7 @@ object DotnetTestGen {
          |      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
          |    </PackageReference>
          |    <PackageReference Include="Microsoft.Spark" Version="2.1.1" />
-         |    <PackageReference Include="SynapseML.DotnetBase" Version="0.9.1" />
+         |    <PackageReference Include="SynapseML.DotnetBase" Version="0.11.1" />
          |    <PackageReference Include="SynapseML.DotnetE2ETest" Version="${conf.dotnetVersion}" />
          |    <PackageReference Include="SynapseML.$curProject" Version="${conf.dotnetVersion}" />
          |    $referenceCore
@@ -112,6 +111,7 @@ object DotnetTestGen {
          |""".stripMargin, StandardOpenOption.CREATE)
     // scalastyle:on line.size.limit
   }
+  // scalastyle:on method.length
 
   def generateLog4jPropertiesFile(conf: CodegenConfig): Unit = {
     val dir = join(conf.dotnetTestDir, "SynapseMLtest", "Resources")

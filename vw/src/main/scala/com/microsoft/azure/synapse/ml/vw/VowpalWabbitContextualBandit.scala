@@ -5,7 +5,7 @@ package com.microsoft.azure.synapse.ml.vw
 
 import com.microsoft.azure.synapse.ml.core.utils.ParamsStringBuilder
 import com.microsoft.azure.synapse.ml.io.http.SharedVariable
-import com.microsoft.azure.synapse.ml.logging.BasicLogging
+import com.microsoft.azure.synapse.ml.logging.SynapseMLLogging
 import org.apache.spark.ml.ParamInjections.HasParallelismInjected
 import org.apache.spark.ml.linalg.SQLDataTypes.VectorType
 import org.apache.spark.ml.param._
@@ -81,19 +81,23 @@ class ContextualBanditMetrics extends Serializable {
   }
 }
 
-trait VowpalWabbitContextualBanditBase extends VowpalWabbitBase {
+trait VowpalWabbitContextualBanditBase extends VowpalWabbitBaseSpark {
 
   override protected lazy val pyInternalWrapper = true
 
   val sharedCol = new Param[String](this, "sharedCol", "Column name of shared features")
   setDefault(sharedCol -> "shared")
+
   def getSharedCol: String = $(sharedCol)
+
   def setSharedCol(value: String): this.type = set(sharedCol, value)
 
   val additionalSharedFeatures = new StringArrayParam(this, "additionalSharedFeatures",
     "Additional namespaces for the shared example")
   setDefault(additionalSharedFeatures -> Array.empty)
+
   def getAdditionalSharedFeatures: Array[String] = $(additionalSharedFeatures)
+
   def setAdditionalSharedFeatures(value: Array[String]): this.type = set(additionalSharedFeatures, value)
 }
 
@@ -102,7 +106,7 @@ class VowpalWabbitContextualBandit(override val uid: String)
   extends Predictor[Row, VowpalWabbitContextualBandit, VowpalWabbitContextualBanditModel]
     with VowpalWabbitContextualBanditBase
     with HasParallelismInjected
-    with ComplexParamsWritable with BasicLogging {
+    with ComplexParamsWritable with SynapseMLLogging {
   logClass()
 
   override protected lazy val pyInternalWrapper = true
@@ -112,17 +116,23 @@ class VowpalWabbitContextualBandit(override val uid: String)
   val probabilityCol = new Param[String](this, "probabilityCol",
     "Column name of probability of chosen action")
   setDefault(probabilityCol -> "probability")
+
   def getProbabilityCol: String = $(probabilityCol)
+
   def setProbabilityCol(value: String): this.type = set(probabilityCol, value)
 
   val chosenActionCol = new Param[String](this, "chosenActionCol", "Column name of chosen action")
   setDefault(chosenActionCol -> "chosenAction")
+
   def getChosenActionCol: String = $(chosenActionCol)
+
   def setChosenActionCol(value: String): this.type = set(chosenActionCol, value)
 
   val epsilon = new DoubleParam(this, "epsilon", "epsilon used for exploration")
   setDefault(epsilon -> 0.05)
+
   def getEpsilon: Double = $(epsilon)
+
   def setEpsilon(value: Double): this.type = set(epsilon, value)
 
   def setParallelism(value: Int): this.type = set(parallelism, value)
@@ -131,12 +141,12 @@ class VowpalWabbitContextualBandit(override val uid: String)
   protected override def getAdditionalColumns: Seq[String] =
     Seq(getChosenActionCol, getProbabilityCol, getSharedCol) ++ getAdditionalSharedFeatures
 
-  protected override def appendExtraParams(sb: ParamsStringBuilder): ParamsStringBuilder =
-  {
+  protected override def appendExtraParams(sb: ParamsStringBuilder): ParamsStringBuilder = {
     sb.appendParamFlagIfNotThere("cb_explore_adf")
       .appendParamValueIfNotThere("epsilon", "epsilon", epsilon)
   }
 
+  //scalastyle:off
   override def transformSchema(schema: StructType): StructType = {
     val allActionFeatureColumns = Seq(getFeaturesCol) ++ getAdditionalFeatures
     val allSharedFeatureColumns = Seq(getSharedCol) ++ getAdditionalSharedFeatures
@@ -146,8 +156,7 @@ class VowpalWabbitContextualBandit(override val uid: String)
 
     // Validate args
     val allArgs = getPassThroughArgs
-    if (allArgs.matches("^.*--(cb_explore|cb|cb_adf)( |$).*$"))
-    {
+    if (allArgs.matches("^.*--(cb_explore|cb|cb_adf)( |$).*$")) {
       throw new NotImplementedError("VowpalWabbitContextualBandit is only compatible with contextual bandit problems" +
         " with action dependent features which produce a probability distributions. These are problems which are " +
         "used with VowpalWabbit with the '--cb_explore_adf' flag.")
@@ -196,9 +205,10 @@ class VowpalWabbitContextualBandit(override val uid: String)
     schema
   }
 
-  protected override def trainRow(schema: StructType,
-                                  inputRows: Iterator[Row],
-                                  ctx: TrainContext
+  protected override def
+  trainFromRows(schema: StructType,
+                                       inputRows: Iterator[Row],
+                                       ctx: TrainContext
                                  ): Unit = {
     val allActionFeatureColumns = Seq(getFeaturesCol) ++ getAdditionalFeatures
     val allSharedFeatureColumns = Seq(getSharedCol) ++ getAdditionalSharedFeatures
@@ -216,7 +226,7 @@ class VowpalWabbitContextualBandit(override val uid: String)
     val exampleStack = new ExampleStack(ctx.vw)
 
     for (row <- inputRows) {
-      VowpalWabbitUtil.prepareMultilineExample(row, actionNamespaceInfos, sharedNamespaceInfos, ctx.vw, exampleStack,
+      VowpalWabbitUtil.prepareMultilineExample(row, actionNamespaceInfos, sharedNamespaceInfos, exampleStack,
         examples => {
           // It's one-based but we need to skip the shared example anyway
           val selectedActionIdx = row.getInt(chosenActionColIdx)
@@ -234,7 +244,10 @@ class VowpalWabbitContextualBandit(override val uid: String)
             loggedProbability)
 
           // Learn from the examples
-          ctx.vw.learn(examples)
+          val pred = ctx.vw.learn(examples)
+
+          // collect predictions
+          ctx.predictionBuffer.append(row, pred)
 
           // Update the IPS/SNIPS estimator
           val prediction: ActionProbs = examples(0).getPrediction.asInstanceOf[ActionProbs]
@@ -242,7 +255,7 @@ class VowpalWabbitContextualBandit(override val uid: String)
           val selectedActionIdxZeroBased = selectedActionIdx - 1
           probs.find(item => item.getAction == selectedActionIdxZeroBased) match {
             case Some(evalProb) =>
-              ctx.contextualBanditMetrics.addExample(loggedProbability, cost,evalProb.getProbability())
+              ctx.contextualBanditMetrics.addExample(loggedProbability, cost, evalProb.getProbability())
             case None => log.warn(s"No action found for index: $selectedActionIdxZeroBased " +
               s"in ${probs.mkString("Array(", ", ", ")")}.")
           }
@@ -260,7 +273,7 @@ class VowpalWabbitContextualBandit(override val uid: String)
         .setPredictionCol(getPredictionCol)
 
       trainInternal(dataset, model)
-    })
+    }, dataset.columns.length)
   }
 
   override def fit(dataset: Dataset[_], paramMaps: Seq[ParamMap]): Seq[VowpalWabbitContextualBanditModel] = {
@@ -280,7 +293,7 @@ class VowpalWabbitContextualBandit(override val uid: String)
       }
 
       awaitFutures(modelFutures).map(model => model.setParent(this))
-    })
+    }, dataset.columns.length)
   }
 
   def parallelFit(dataset: Dataset[_], paramMaps: util.ArrayList[ParamMap]):
@@ -297,9 +310,9 @@ class VowpalWabbitContextualBandit(override val uid: String)
 //noinspection ScalaStyle
 class VowpalWabbitContextualBanditModel(override val uid: String)
   extends PredictionModel[Row, VowpalWabbitContextualBanditModel]
-    with VowpalWabbitBaseModel
+    with VowpalWabbitBaseModelSpark
     with VowpalWabbitContextualBanditBase
-    with ComplexParamsWritable with BasicLogging {
+    with ComplexParamsWritable with SynapseMLLogging {
   logClass()
 
   def this() = this(Identifiable.randomUID("VowpalWabbitContextualBanditModel"))
@@ -329,7 +342,7 @@ class VowpalWabbitContextualBanditModel(override val uid: String)
       val sharedNamespaceInfos = VowpalWabbitUtil.generateNamespaceInfos(schema, getHashSeed, allSharedFeatureColumns)
 
       val predictUDF = udf { (row: Row) =>
-        VowpalWabbitUtil.prepareMultilineExample(row, actionNamespaceInfos, sharedNamespaceInfos, vw, exampleStack.get,
+        VowpalWabbitUtil.prepareMultilineExample(row, actionNamespaceInfos, sharedNamespaceInfos, exampleStack.get,
           examples => {
             vw.predict(examples)
               .asInstanceOf[vowpalWabbit.responses.ActionProbs]
@@ -348,13 +361,12 @@ class VowpalWabbitContextualBanditModel(override val uid: String)
       dataset.withColumn(
         $(predictionCol),
         predictUDF(struct(dataset.columns.map(dataset(_)): _*)))
-    })
+    }, dataset.columns.length)
   }
 
   override def predict(features: Row): Double = {
-    logPredict(
-      throw new NotImplementedError("Predict is not implemented, as the prediction output of this model is a list of " +
-        "probabilities not a single double. Use transform instead."))
+    throw new NotImplementedError("Predict is not implemented, as the prediction output of this model is a list of " +
+      "probabilities not a single double. Use transform instead.")
   }
 
   override def copy(extra: ParamMap): this.type = defaultCopy(extra)

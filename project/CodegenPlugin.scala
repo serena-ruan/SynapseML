@@ -91,7 +91,8 @@ object CodegenPlugin extends AutoPlugin {
   override lazy val globalSettings: Seq[Setting[_]] = Seq(
     Global / concurrentRestrictions ++= Seq(
       Tags.limit(RInstallTag, 1), Tags.limit(TestGenTag, 1), Tags.limit(DotnetTestGenTag, 1),
-      Tags.limit(DotnetCodeGenTag, 1), Tags.limit(TestDotnetTag, 1))
+      Tags.limit(DotnetCodeGenTag, 1), Tags.limit(TestDotnetTag, 1)),
+    Global / excludeLintKeys += publishMavenStyle
   )
 
   def testRImpl: Def.Initialize[Task[Unit]] = Def.task {
@@ -340,7 +341,7 @@ object CodegenPlugin extends AutoPlugin {
       val dotnetPackageName = name.value.split("-").drop(1).map(s => s.capitalize).mkString("")
       val packagePath = join(codegenDir.value, "package", "dotnet",
         s"SynapseML.$dotnetPackageName.${dotnetedVersion(version.value)}.nupkg").absolutePath
-      publishDotnetAssemblyCmd(packagePath, mergeCodeDir.value)
+      publishDotnetAssemblyCmd(packagePath, join(mergeCodeDir.value, "sleet.json"))
     },
     targetDir := {
       (Compile / packageBin / artifactPath).value.getParentFile

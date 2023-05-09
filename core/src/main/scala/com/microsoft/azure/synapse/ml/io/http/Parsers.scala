@@ -7,7 +7,7 @@ import com.microsoft.azure.synapse.ml.codegen.Wrappable
 import com.microsoft.azure.synapse.ml.core.contracts.{HasInputCol, HasOutputCol}
 import com.microsoft.azure.synapse.ml.core.schema.DatasetExtensions.{findUnusedColumnName => newCol}
 import com.microsoft.azure.synapse.ml.core.serialize.ComplexParam
-import com.microsoft.azure.synapse.ml.logging.BasicLogging
+import com.microsoft.azure.synapse.ml.logging.SynapseMLLogging
 import com.microsoft.azure.synapse.ml.param._
 import com.microsoft.azure.synapse.ml.stages.UDFTransformer
 import org.apache.http.client.methods.HttpRequestBase
@@ -34,7 +34,7 @@ abstract class HTTPInputParser extends Transformer with HasOutputCol with HasInp
 object JSONInputParser extends ComplexParamsReadable[JSONInputParser]
 
 class JSONInputParser(val uid: String) extends HTTPInputParser
-  with HasURL with ComplexParamsWritable with BasicLogging {
+  with HasURL with ComplexParamsWritable with SynapseMLLogging {
   logClass()
 
   def this() = this(Identifiable.randomUID("JSONInputParser"))
@@ -85,14 +85,13 @@ class JSONInputParser(val uid: String) extends HTTPInputParser
           HTTPSchema.to_http_request(urlCol, headersCol, methodCol, entityCol))
         .drop(entityCol, urlCol, headersCol, methodCol)
         .withColumnRenamed(requestCol, getOutputCol)
-    })
+    }, dataset.columns.length)
   }
-
 }
 
 object CustomInputParser extends ComplexParamsReadable[CustomInputParser] with Serializable
 
-class CustomInputParser(val uid: String) extends HTTPInputParser with ComplexParamsWritable with BasicLogging {
+class CustomInputParser(val uid: String) extends HTTPInputParser with ComplexParamsWritable with SynapseMLLogging {
   logClass()
 
   def this() = this(Identifiable.randomUID("CustomInputParser"))
@@ -143,7 +142,7 @@ class CustomInputParser(val uid: String) extends HTTPInputParser with ComplexPar
         }
       }
       dataset.toDF().withColumn(getOutputCol, parseInputExpression)
-    })
+    }, dataset.columns.length)
   }
 
 }
@@ -154,7 +153,7 @@ abstract class HTTPOutputParser extends Transformer with HasInputCol with HasOut
 
 object JSONOutputParser extends ComplexParamsReadable[JSONOutputParser]
 
-class JSONOutputParser(val uid: String) extends HTTPOutputParser with ComplexParamsWritable with BasicLogging {
+class JSONOutputParser(val uid: String) extends HTTPOutputParser with ComplexParamsWritable with SynapseMLLogging {
   logClass()
 
   override protected lazy val pyInternalWrapper = true
@@ -193,12 +192,11 @@ class JSONOutputParser(val uid: String) extends HTTPOutputParser with ComplexPar
       val stringEntityCol = HTTPSchema.entity_to_string(col(getInputCol + ".entity"))
       val parsed = dataset.toDF.withColumn(getOutputCol,
         from_json(stringEntityCol, getDataType, Map("charset" -> "UTF-8")))
-
       getPostProcessor.map(_
         .setInputCol(getOutputCol)
         .setOutputCol(getOutputCol)
         .transform(parsed)).getOrElse(parsed)
-    })
+    }, dataset.columns.length)
   }
 
   override def transformSchema(schema: StructType): StructType = {
@@ -210,7 +208,7 @@ class JSONOutputParser(val uid: String) extends HTTPOutputParser with ComplexPar
 
 object StringOutputParser extends ComplexParamsReadable[StringOutputParser]
 
-class StringOutputParser(val uid: String) extends HTTPOutputParser with ComplexParamsWritable with BasicLogging {
+class StringOutputParser(val uid: String) extends HTTPOutputParser with ComplexParamsWritable with SynapseMLLogging {
   logClass()
 
   def this() = this(Identifiable.randomUID("StringOutputParser"))
@@ -219,7 +217,7 @@ class StringOutputParser(val uid: String) extends HTTPOutputParser with ComplexP
     logTransform[DataFrame]({
       val stringEntityCol = HTTPSchema.entity_to_string(col(getInputCol + ".entity"))
       dataset.toDF.withColumn(getOutputCol, stringEntityCol)
-    })
+    }, dataset.columns.length)
   }
 
   override def transformSchema(schema: StructType): StructType = {
@@ -231,7 +229,7 @@ class StringOutputParser(val uid: String) extends HTTPOutputParser with ComplexP
 
 object CustomOutputParser extends ComplexParamsReadable[CustomOutputParser] with Serializable
 
-class CustomOutputParser(val uid: String) extends HTTPOutputParser with ComplexParamsWritable with BasicLogging {
+class CustomOutputParser(val uid: String) extends HTTPOutputParser with ComplexParamsWritable with SynapseMLLogging {
   logClass()
 
   def this() = this(Identifiable.randomUID("CustomOutputParser"))
@@ -276,13 +274,13 @@ class CustomOutputParser(val uid: String) extends HTTPOutputParser with ComplexP
       }
       dataset.toDF()
         .withColumn(getOutputCol, parseOutputExpression)
-    })
+    }, dataset.columns.length)
   }
 
   override def transformSchema(schema: StructType): StructType = {
     assert(schema(getInputCol).dataType == HTTPSchema.Response)
 
-    def test_method: DataType = {
+    def testMethod: DataType = {
       (get(udfScala), get(udfPython)) match {
         case (Some(f), None) => StringType
         case (None, Some(f)) => f.dataType
@@ -290,7 +288,6 @@ class CustomOutputParser(val uid: String) extends HTTPOutputParser with ComplexP
       }
     }
 
-    schema.add(getOutputCol, test_method)
+    schema.add(getOutputCol, testMethod)
   }
-
 }
