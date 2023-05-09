@@ -21,7 +21,8 @@ from PredictionParams import PredictionParams
 from DeepVisionModel import DeepVisionModel
 from LitDeepVisionModel import LitDeepVisionModel
 from GatewayUtils import GatewayUtils
-from utils import keywords_catch
+from utils import keywords_catch, generate_uuid
+# from PythonEntryPoint import python_entry_point
 
 from py4j.clientserver import ClientServer, JavaParameters, PythonParameters
 
@@ -37,7 +38,7 @@ if _HOROVOD_AVAILABLE:
 else:
     raise ModuleNotFoundError("module not found: horovod")
 
-class DeepVisionClassifier(TorchEstimator, PredictionParams, GatewayUtils):
+class DeepVisionClassifier(TorchEstimator, PredictionParams):
 
     backbone = Param(
         Params._dummy(), "backbone", "backbone of the deep vision classifier"
@@ -263,9 +264,6 @@ class DeepVisionClassifier(TorchEstimator, PredictionParams, GatewayUtils):
         self._update_cols()
         self._update_transformation_fn()
         self._update_store()
-
-        self.gateway.jvm.System.out.println(f"*****backbone: {self.getBackbone()}*****")
-        self.gateway.jvm.System.out.println(f"*****numClasses: {self.getNumClasses()}*****")
         
         model = LitDeepVisionModel(
             backbone=self.getBackbone(),
@@ -283,17 +281,11 @@ class DeepVisionClassifier(TorchEstimator, PredictionParams, GatewayUtils):
         logging.warning(f"model created: {model}")
         deepVisionModel = super()._fit(dataset)
         logging.warning(f"-------fit completion: {deepVisionModel}")
-        # self.shutdownPython() # should we switch gateway? Or can we use the same gateway to connect bunch of objects?
-        # new_gateway = ClientServer(
-        #     java_parameters=self.gateway.java_parameters,
-        #     python_parameters=self.gateway.python_parameters,
-        #     python_server_entry_point=deepVisionModel
-        # )
-        # deepVisionModel.setGateway(new_gateway)
-        self.gateway._update_python_server_entry_point(deepVisionModel)
-        logging.warning(f"updated python server entry point")
-        deepVisionModel.setGateway(self.gateway)
-        return deepVisionModel
+        # Set python_entry_point to global variable
+        # global python_entry_point
+        uid = generate_uuid("DeepVisionModel")
+        # python_entry_point.addObject(uid, deepVisionModel)
+        return uid, deepVisionModel
 
     # override this method to provide a correct default backend
     def _get_or_create_backend(self):
@@ -373,48 +365,7 @@ class DeepVisionClassifier(TorchEstimator, PredictionParams, GatewayUtils):
             image_col=self.getImageCol(),
             prediction_col=self.getPredictionCol(),
         )
-
-    class Java:
-        implements = ["org.apache.spark.dl.IDeepVisionClassifier"]
-
-class DeepVisionClassifierHelper:
-
-    @classmethod
-    def startPyPort(cls, secret):
-        import os
-        from py4j.clientserver import ClientServer, JavaParameters, PythonParameters
-
-        deepVisionClassifier = DeepVisionClassifier(num_proc=1, use_gpu=False)
-        print(f"Create DeepVisionClassifier object")
-        java_parameters = JavaParameters(auth_token=secret, auto_convert=True)
-        python_parameters = PythonParameters(auth_token=secret)
-        gateway = ClientServer(
-            java_parameters=java_parameters,
-            python_parameters=python_parameters,
-            python_server_entry_point=deepVisionClassifier
-        )
-        
-        # os.environ["PYSPARK_GATEWAY_PORT"] = str(java_parameters.port)
-        # os.environ["PYSPARK_GATEWAY_SECRET"] = java_parameters.auth_token
-        deepVisionClassifier.setGateway(gateway)
-        print(f"PYSPARK_GATEWAY_PORT: {str(java_parameters.port)}")
-        print(f"auth token: {gateway.gateway_parameters.auth_token}")
-        print(f"Service started at port: {gateway.python_parameters.port}")
-
-if __name__ == "__main__":
     
-    DeepVisionClassifierHelper.startPyPort(str(sys.argv[1]))
-    # from pyspark.sql.session import SparkSession
-    # spark = SparkSession.builder.master("local[*]").getOrCreate()
-
-    # dataframe = spark.createDataFrame(
-    #     [
-    #         (0, 1, 4, 4),
-    #         (0, 3, 1, 1),
-    #     ],
-    #     ["col1", "col2", "col3", "col4"],
-    # )
-    # dataframe.select("col1")
-
-    # spark.stop()
-    # print('haha')
+    # For py4j only
+    def _get_object_id(self):
+        return self.uid

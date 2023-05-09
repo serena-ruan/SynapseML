@@ -18,6 +18,7 @@ import py4j.ClientServer
 
 import java.io.File
 import java.lang.ProcessBuilder.Redirect
+import java.util
 
 
 trait PredictionParams extends Params {
@@ -47,57 +48,25 @@ trait PredictionParams extends Params {
 
 }
 
-trait IDeepVisionClassifier extends PredictionParams {
-
-  def setBackbone(v: String): IDeepVisionClassifier
-
-  def setAdditionalLayersToTrain(v: Int): IDeepVisionClassifier
-
-  def setNumClasses(v: Int): IDeepVisionClassifier
-
-  def setLossName(v: String): IDeepVisionClassifier
-
-  def setOptimizerName(v: String): IDeepVisionClassifier
-
-  def setDropoutAUX(v: Double): IDeepVisionClassifier
-
-  def setStoreParam(v: String): IDeepVisionClassifier
-
-  def setStorePrefixPath(v: String): IDeepVisionClassifier
-
-  def fit(dataset: Dataset[_]): Any
-
-  def updateGatewayImports(): Unit
-
-  def shutdownPython(): Unit
-
-  def shutdown(): Unit
-}
-
-class DeepVisionClassifier(override val uid: String, val clientServer: ClientServer)
-  extends Estimator[DeepVisionModel] with IDeepVisionClassifier
+class DeepVisionClassifier(override val uid: String, val pythonEntryPoint: PythonEntryPoint)
+  extends Estimator[DeepVisionModel] with PredictionParams
     with ComplexParamsWritable
     with Wrappable
     with BasicLogging {
 
   logClass()
 
-  def this() = this(Identifiable.randomUID("DeepVisionClassifier"), new ClientServer())
-
-  def this(clientServer: ClientServer) = this(Identifiable.randomUID("DeepVisionClassifier"), clientServer)
-
-  type ValueType = IDeepVisionClassifier
-
-  //  var pyObject: ValueType = null
-  val pyObject: ValueType = this.clientServer.getPythonServerEntryPoint(
-    Array(classOf[ValueType])).asInstanceOf[ValueType]
+  def this(pythonEntryPoint: PythonEntryPoint) =
+    this(pythonEntryPoint.createObject("DeepVisionClassifier"), pythonEntryPoint)
 
   val backbone = new Param[String](this,
     "backbone",
     "Backbone of the deep vision model, should be a string representation of torchvision model.")
 
   def setBackbone(v: String): this.type = {
-    this.pyObject.setBackbone(v)
+    val methodValue = new util.HashMap[String, Any]()
+    methodValue.put("value", v)
+    this.pythonEntryPoint.callMethod(this.uid, "setBackbone", methodValue)
     set(backbone, v)
   }
 
@@ -108,7 +77,9 @@ class DeepVisionClassifier(override val uid: String, val clientServer: ClientSer
     "number of last layers to fine tune for the model, should be between 0 and 3")
 
   def setAdditionalLayersToTrain(v: Int): this.type = {
-    this.pyObject.setAdditionalLayersToTrain(v)
+    val methodValue = new util.HashMap[String, Any]()
+    methodValue.put("value", v)
+    this.pythonEntryPoint.callMethod(this.uid, "setAdditionalLayersToTrain", methodValue)
     set(additionalLayersToTrain, v)
   }
 
@@ -119,7 +90,9 @@ class DeepVisionClassifier(override val uid: String, val clientServer: ClientSer
     "number of target classes")
 
   def setNumClasses(v: Int): this.type = {
-    this.pyObject.setNumClasses(v)
+    val methodValue = new util.HashMap[String, Any]()
+    methodValue.put("value", v)
+    this.pythonEntryPoint.callMethod(this.uid, "setNumClasses", methodValue)
     set(numClasses, v)
   }
 
@@ -131,7 +104,9 @@ class DeepVisionClassifier(override val uid: String, val clientServer: ClientSer
       "pytorch_lightning model, e.g. binary_cross_entropy")
 
   def setLossName(v: String): this.type = {
-    this.pyObject.setLossName(v)
+    val methodValue = new util.HashMap[String, Any]()
+    methodValue.put("value", v)
+    this.pythonEntryPoint.callMethod(this.uid, "setLossName", methodValue)
     set(lossName, v)
   }
 
@@ -142,7 +117,9 @@ class DeepVisionClassifier(override val uid: String, val clientServer: ClientSer
     "string representation of optimizer function for the underlying pytorch_lightning model")
 
   def setOptimizerName(v: String): this.type = {
-    this.pyObject.setOptimizerName(v)
+    val methodValue = new util.HashMap[String, Any]()
+    methodValue.put("value", v)
+    this.pythonEntryPoint.callMethod(this.uid, "setOptimizerName", methodValue)
     set(optimizerName, v)
   }
 
@@ -154,7 +131,9 @@ class DeepVisionClassifier(override val uid: String, val clientServer: ClientSer
       "layer only: probability of an element to be zeroed")
 
   def setDropoutAUX(v: Double): this.type = {
-    this.pyObject.setDropoutAUX(v)
+    val methodValue = new util.HashMap[String, Any]()
+    methodValue.put("value", v)
+    this.pythonEntryPoint.callMethod(this.uid, "setDropoutAUX", methodValue)
     set(dropoutAUX, v)
   }
 
@@ -166,17 +145,23 @@ class DeepVisionClassifier(override val uid: String, val clientServer: ClientSer
     dropoutAUX -> 0.7)
 
   def setLabelCol(v: String): this.type = {
-    this.pyObject.setLabelCol(v)
+    val methodValue = new util.HashMap[String, Any]()
+    methodValue.put("value", v)
+    this.pythonEntryPoint.callMethod(this.uid, "setLabelCol", methodValue)
     set(labelCol, v)
   }
 
   def setImageCol(v: String): this.type = {
-    this.pyObject.setImageCol(v)
+    val methodValue = new util.HashMap[String, Any]()
+    methodValue.put("value", v)
+    this.pythonEntryPoint.callMethod(this.uid, "setImageCol", methodValue)
     set(imageCol, v)
   }
 
   def setPredictionCol(v: String): this.type = {
-    this.pyObject.setPredictionCol(v)
+    val methodValue = new util.HashMap[String, Any]()
+    methodValue.put("value", v)
+    this.pythonEntryPoint.callMethod(this.uid, "setPredictionCol", methodValue)
     set(predictionCol, v)
   }
 
@@ -185,7 +170,9 @@ class DeepVisionClassifier(override val uid: String, val clientServer: ClientSer
     "A string representation of the store for horovod training")
 
   def setStoreParam(v: String): this.type = {
-    this.pyObject.setStoreParam(v)
+    val methodValue = new util.HashMap[String, Any]()
+    methodValue.put("value", v)
+    this.pythonEntryPoint.callMethod(this.uid, "setStoreParam", methodValue)
     set(storeParam, v)
   }
 
@@ -196,7 +183,9 @@ class DeepVisionClassifier(override val uid: String, val clientServer: ClientSer
     "Prefix path used for store_param, should only be used when you use store_param instead of store")
 
   def setStorePrefixPath(v: String): this.type = {
-    this.pyObject.setStorePrefixPath(v)
+    val methodValue = new util.HashMap[String, Any]()
+    methodValue.put("value", v)
+    this.pythonEntryPoint.callMethod(this.uid, "setStorePrefixPath", methodValue)
     set(storePrefixPath, v)
   }
 
@@ -204,16 +193,16 @@ class DeepVisionClassifier(override val uid: String, val clientServer: ClientSer
 
   override def fit(dataset: Dataset[_]): DeepVisionModel = {
     logFit({
-      this.pyObject.fit(dataset)
-      new DeepVisionModel(this.clientServer) //TODO: fix those params set in python side but not scala side yet
+      val methodValue = new util.HashMap[String, Any]()
+      methodValue.put("df", dataset)
+      val result = this.pythonEntryPoint.callMethod(this.uid, "fit", methodValue)
+        .asInstanceOf[Tuple2[String, Any]]
+      val uid = result._1
+      val deepVisionModelObj = result._2
+      this.pythonEntryPoint.addObject(uid, deepVisionModelObj)
+      new DeepVisionModel(uid, this.pythonEntryPoint)
     })
   }
-
-  def shutdownPython(): Unit = this.pyObject.shutdownPython()
-
-  def shutdown(): Unit = this.clientServer.shutdown()
-
-  def updateGatewayImports(): Unit = this.pyObject.updateGatewayImports()
 
   override def copy(extra: ParamMap): Estimator[DeepVisionModel] = defaultCopy(extra)
 
@@ -222,55 +211,45 @@ class DeepVisionClassifier(override val uid: String, val clientServer: ClientSer
   }
 }
 
-trait IDeepVisionModel extends PredictionParams {
 
-  def transform(dataset: Dataset[_]): DataFrame
-
-  def shutdownPython(): Unit
-
-  def shutdown(): Unit
-}
-
-
-class DeepVisionModel(override val uid: String, val clientServer: ClientServer)
-  extends Model[DeepVisionModel] with IDeepVisionModel
+class DeepVisionModel(override val uid: String, val pythonEntryPoint: PythonEntryPoint)
+  extends Model[DeepVisionModel] with PredictionParams
     with ComplexParamsWritable with BasicLogging {
 
   logClass()
 
-  def this() = this(Identifiable.randomUID("DeepVisionModel"), new ClientServer())
-
-  def this(clientServer: ClientServer) = this(Identifiable.randomUID("DeepVisionModel"), clientServer)
-
-  type ValueType = IDeepVisionModel
-
-  val pyObject: ValueType = this.clientServer.getPythonServerEntryPoint(
-    Array(classOf[ValueType])).asInstanceOf[ValueType]
+  def this(pythonEntryPoint: PythonEntryPoint) =
+    this(pythonEntryPoint.createObject("DeepVisionModel"), pythonEntryPoint)
 
   def setLabelCol(v: String): this.type = {
-    this.pyObject.setLabelCol(v)
+    val methodValue = new util.HashMap[String, Any]()
+    methodValue.put("value", v)
+    this.pythonEntryPoint.callMethod(this.uid, "setLabelCol", methodValue)
     set(labelCol, v)
   }
 
   def setImageCol(v: String): this.type = {
-    this.pyObject.setImageCol(v)
+    val methodValue = new util.HashMap[String, Any]()
+    methodValue.put("value", v)
+    this.pythonEntryPoint.callMethod(this.uid, "setImageCol", methodValue)
     set(imageCol, v)
   }
 
   def setPredictionCol(v: String): this.type = {
-    this.pyObject.setPredictionCol(v)
+    val methodValue = new util.HashMap[String, Any]()
+    methodValue.put("value", v)
+    this.pythonEntryPoint.callMethod(this.uid, "setPredictionCol", methodValue)
     set(predictionCol, v)
   }
 
   override def transform(dataset: Dataset[_]): DataFrame = {
     logTransform({
-      this.pyObject.transform(dataset)
+      val methodValue = new util.HashMap[String, Any]()
+      methodValue.put("dataset", dataset)
+      val df = this.pythonEntryPoint.callMethod(this.uid, "transform", methodValue)
+      df.asInstanceOf[DataFrame]
     })
   }
-
-  def shutdownPython(): Unit = this.pyObject.shutdownPython()
-
-  def shutdown(): Unit = this.clientServer.shutdown()
 
   override def copy(extra: ParamMap): DeepVisionModel = defaultCopy(extra)
 
@@ -344,35 +323,24 @@ class TestSuite extends TestBase {
   // We should run python script first
   // This opens port 25334
   test("runPython") {
-    Utils.runCmd(Seq("/home/serena/miniconda3/envs/synapseml/bin/python", "DeepVisionClassifier.py", secret),
+    Utils.runCmd(Seq("/home/serena/miniconda3/envs/synapseml/bin/python", "PythonEntryPoint.py", secret),
       new File("/home/serena/repos/SynapseML/deep-learning/src/test/scala/org/apache/spark/dl"))
-  }
-
-  test("py4j") {
-    val clientServer = new ClientServer.ClientServerBuilder()
-      .authToken("832c7b2af7e678d3000fee030090e780f921af308693ed925dce899ce47a1ace")
-//      .autoStartJavaServer(false)
-      .build()
-    val pythonClient = clientServer.getPythonClient
-    val javaServer = clientServer.getJavaServer
-    val gateway = javaServer.getGateway()
-    val pyObject: IDeepVisionClassifier = clientServer.getPythonServerEntryPoint(
-      Array(classOf[IDeepVisionClassifier])).asInstanceOf[IDeepVisionClassifier]
-    pyObject.setBackbone("resnet50")
   }
 
   test("deepVisionClassifier") {
     val clientServer = new ClientServer.ClientServerBuilder()
-      .authToken("47ff74ae8650732f31b8e644581f591eee1d787d758a420c07ffea1d96160ee7")
+      .authToken("5abf6ac7b7dd62fd1878624894296a60af59642666c8d0198e67aaf026f8c064")
       .build()
-    val deepVisionClassifier = new DeepVisionClassifier(clientServer)
+
+    val pyEntryPoint = new PythonEntryPoint(clientServer)
+    pyEntryPoint.updateGatewayImports()
+
+    val deepVisionClassifier = new DeepVisionClassifier(pyEntryPoint)
       .setBackbone("resnet50")
       .setAdditionalLayersToTrain(1)
       .setNumClasses(17)
       .setStoreParam("LocalStore")
       .setStorePrefixPath("./test")
-
-    deepVisionClassifier.updateGatewayImports()
 
     println(deepVisionClassifier.getNumClasses())
     println(deepVisionClassifier.getLossName())
@@ -384,8 +352,8 @@ class TestSuite extends TestBase {
 
     val deepVisionModel = deepVisionClassifier.fit(trainDF)
 
-    deepVisionClassifier.shutdownPython()
-    deepVisionClassifier.shutdown()
+    pyEntryPoint.shutdownPython()
+    pyEntryPoint.shutdown()
   }
 
 }

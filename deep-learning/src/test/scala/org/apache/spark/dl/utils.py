@@ -2,6 +2,7 @@
 # Licensed under the MIT License. See LICENSE in project root for information.
 
 from functools import wraps
+import uuid
 
 
 def keywords_catch(func):
@@ -22,3 +23,6 @@ def keywords_catch(func):
         return func(self, **kwargs)
 
     return wrapper
+
+def generate_uuid(class_name):
+    return class_name + "_" + str(uuid.uuid4())[-12:]

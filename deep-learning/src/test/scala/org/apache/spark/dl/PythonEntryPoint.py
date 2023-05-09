@@ -1,7 +1,9 @@
-import uuid
 import logging
+import inspect
 
+from utils import generate_uuid
 from GatewayUtils import GatewayUtils
+from DeepVisionClassifier import DeepVisionClassifier
 
 class PythonEntryPoint(GatewayUtils):
     def __init__(self):
@@ -10,20 +12,14 @@ class PythonEntryPoint(GatewayUtils):
     # Only support setParam method on objects to make this function clean
     # TODO: update python class loader (java_params_patch.py)
     def createObject(self, class_name):
-        uid = class_name + "_" + str(uuid.uuid4())[-12:]
+        uid = generate_uuid(class_name)
         self.pool[uid] = eval(class_name+"()")
         self.gateway.jvm.System.out.println(uid)
         return uid
     
-    # def callMethod(self, uid, method_name, **kwargs):
-    #     obj = self.pool[uid]
-    #     logging.warning(f"----------uid: {uid}")
-    #     self.gateway.jvm.System.out.println(uid)
-    #     logging.warning(f"----------kwargs: {kwargs}")
-    #     self.gateway.jvm.System.out.println(kwargs)
-    #     func = getattr(obj, method_name)
-    #     logging.warning(f"----------func: {func}")
-    #     return func(**kwargs)
+    def addObject(self, uid, new_object):
+        self.pool[uid] = new_object
+        return uid
     
     # py4j.clientserver.py _call_proxy method uses *args
     def callMethod(self, uid, method_name, *args):
@@ -34,6 +30,7 @@ class PythonEntryPoint(GatewayUtils):
         self.gateway.jvm.System.out.println(args)
         func = getattr(obj, method_name)
         logging.warning(f"----------func: {func}")
+        logging.warning(f"----kwargs accepted: {inspect.getfullargspec(func)}")
         if len(args) > 1:
             raise Exception(f"Only accept kwargs here, {args} received")
         elif len(args) == 1:
@@ -48,12 +45,7 @@ class PythonEntryPoint(GatewayUtils):
     class Java:
         implements = ["org.apache.spark.dl.IPythonEntryPoint"]
 
-class SimpleHello:
-    def __init__(self):
-        self.prefix = "Hello "
-    
-    def sayHello(self, name, greetings):
-        print(self.prefix + name + ", " + greetings)
+python_entry_point = None
 
 class PythonEntryPointHelper:
 
@@ -61,6 +53,7 @@ class PythonEntryPointHelper:
     def startPyPort(cls, secret):
         import os
         from py4j.clientserver import ClientServer, JavaParameters, PythonParameters
+        global python_entry_point
 
         python_entry_point = PythonEntryPoint()
         print(f"Create PythonEntryPoint object")

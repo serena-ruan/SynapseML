@@ -16,7 +16,7 @@ from GatewayUtils import GatewayUtils
 from utils import keywords_catch
 
 
-class DeepVisionModel(TorchModel, PredictionParams, GatewayUtils):
+class DeepVisionModel(TorchModel, PredictionParams):
 
     transform_fn = Param(
         Params._dummy(),
@@ -125,25 +125,3 @@ class DeepVisionModel(TorchModel, PredictionParams, GatewayUtils):
             self.getPredictionCol(), argmax(col(self.getOutputCols()[0]))
         )
         return pred_df
-
-    class Java:
-        implements = ["org.apache.spark.dl.IDeepVisionModel"]
-
-class DeepVisionModelHelper:
-
-    @classmethod
-    def startPyPort(cls):
-        from py4j.clientserver import ClientServer, JavaParameters, PythonParameters
-
-        deepVisionModel = DeepVisionModel()
-        print(f"Create DeepVisionModel object")
-        gateway = ClientServer(
-            java_parameters=JavaParameters(),
-            python_parameters=PythonParameters(),
-            python_server_entry_point=deepVisionModel
-        )
-        deepVisionModel.setGateway(gateway)
-        print(f"Service started at port: {gateway.python_parameters.port}")
-
-if __name__ == "__main__":
-    DeepVisionModelHelper.startPyPort()

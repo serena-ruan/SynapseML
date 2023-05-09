@@ -14,7 +14,11 @@ trait IPythonEntryPoint {
   /** Create object with className and return objectID in string format */
   def createObject(className: String): String
 
+  def addObject(uid: String, newObject: Any): String
+
   def callMethod(uid: String, methodName: String, methodValue: java.util.HashMap[String, _]): Any
+
+//  def callMethod(uid: String, methodName: String, methodValue: Any*): Any
 
   def getObject(uid: String): Any
 
@@ -32,9 +36,16 @@ class PythonEntryPoint(val clientServer: ClientServer) extends IPythonEntryPoint
 
   def createObject(className: String): String = this.pyObject.createObject(className)
 
+  def addObject(uid: String, newObject: Any): String = this.pyObject.addObject(uid, newObject)
+
   def callMethod(uid: String, methodName: String, methodValue: java.util.HashMap[String, _]): Any = {
     this.pyObject.callMethod(uid, methodName, methodValue)
   }
+
+//  // Need to support Any* mapping to python side
+//  def callMethod(uid: String, methodName: String, methodValue: Any*): Any = {
+//    this.pyObject.callMethod(uid, methodName, methodValue)
+//  }
 
   def getObject(uid: String): Any = this.pyObject.getObject(uid)
 
@@ -61,6 +72,10 @@ class SimpleHello(val pyEntryPoint: PythonEntryPoint) {
     methodValue.put("greetings", greetings)
     this.pyEntryPoint.callMethod(this.uid, "sayHello", methodValue)
   }
+
+//  def sayHello(name: String, greetings: String): Unit = {
+//    this.pyEntryPoint.callMethod(this.uid, "sayHello", name, greetings)
+//  }
 
 }
 
